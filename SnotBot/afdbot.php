@@ -62,7 +62,12 @@ while( true ) {
             if( !in_array( $logpagename, $logpages ) ) {
                 $logpagedata = $site->initPage( $logpagename )->get_text( true );
                 if( str_ireplace( str_replace( "_", " ", $afd['title'] ), "", str_replace( "_", " ", $logpagedata ) ) == str_replace( "_", " ", $logpagedata ) ) {
-                    transclude( $afd['title'], logPageName( time() ) );
+                    if( time() - $creationdate > 600 ) {
+                        transclude( $afd['title'], logPageName( time() ) );
+                    }
+                    else {
+                        $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
+                    }
                 }
             }
             else {

@@ -509,10 +509,13 @@ function getFullPageTitle( $req ) {
     $pagename = trim( $header[2] );
     $namespace = "";
     if( $template == "lat" ) $namespace = "Talk:";
+    elseif( $template == "ld" ) $namespace = "Draft:";
+    elseif( $template == "ldt" ) $namespace = "Draft talk:";
     elseif( $template == "lt" ) $namespace = "Template:";
     elseif( $template == "ltt" ) $namespace = "Template talk:";
     elseif( $template == "lw" ) $namespace = "Wikipedia:";
     elseif( $template == "lwt" ) $namespace = "Wikipedia talk:";
+    elseif( $template == "lafd" ) $namespace = "Wikipedia:Articles for deletion/";
     elseif( $template == "lu" ) $namespace = "User:";
     elseif( $template == "lut" ) $namespace = "User talk:";
     elseif( $template == "lc" ) $namespace = "Category:";
@@ -523,9 +526,14 @@ function getFullPageTitle( $req ) {
     elseif( $template == "lht" ) $namespace = "Help talk:";
     elseif( $template == "lb" ) $namespace = "Book:";
     elseif( $template == "lbt" ) $namespace = "Book talk:";
+    elseif( $template == "lm" ) $namespace = "MediaWiki:";
     elseif( $template == "lmt" ) $namespace = "MediaWiki talk:";
     elseif( $template == "lf" ) $namespace = "File:";
     elseif( $template == "lft" ) $namespace = "File talk:";
+    elseif( $template == "lttxt" ) $namespace = "TimedTex:";
+    elseif( $template == "ltxtt" ) $namespace = "TimedText talk:";
+    elseif( $template == "lmd" ) $namespace = "Module:";
+    elseif( $template == "lmdt" ) $namespace = "Module talk:";
     elseif( $template == "ln" ) {
         $namespace = substr( $pagename, 0, strpos( $pagename, "|" ) ).":";
         $pagename = substr( $pagename, strpos( $pagename, "|" )+1 );

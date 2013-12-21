@@ -43,8 +43,8 @@ while( true ) {
             echo "Whoa.  $afd doesn't exist...?\n";
             continue;
         }
-        if( $afd['title'] == $object->get_title( false ) ) $checkedafds[] = $object->get_title();
-        $checkedafds[] = $afd['title'];
+        if( $afd['title'] == $object->get_title( true ) ) $checkedafds[] = $object->get_title();
+        //$checkedafds[] = $afd['title'];
         $afddata = $object->get_text( true );
         $afddata = preg_replace( '/<(s|strike|del)>.*?<\/(s|strike|del)>/i', '', $afddata );
         if( in_string( "[[category:afd debates]]", strtolower( $afddata ) ) ) {
@@ -59,7 +59,7 @@ while( true ) {
         } else {
             $creationdate = getCreationDate( $object );   
             $logpagename = logPageName($creationdate);
-            if( !in_array( $logpagename, $logpages ) ) {
+            if( !array_key_exists( $logpagename, $logpages ) ) {
                 $logpagedata = $site->initPage( $logpagename )->get_text( true );
                 if( str_ireplace( str_replace( "_", " ", $afd['title'] ), "", str_replace( "_", " ", $logpagedata ) ) == str_replace( "_", " ", $logpagedata ) ) {
                     if( time() - $creationdate > 600 ) {
@@ -71,7 +71,7 @@ while( true ) {
                 }
             }
             else {
-                if( str_ireplace( str_replace( "_", " ", $afd['title'] ), str_replace( "_", " ", $logpages[$logpagename] ) ) == str_replace( "_", " ", $logpages[$logpagename] ) ) {
+                if( str_ireplace( str_replace( "_", " ", $afd['title'] ), "", str_replace( "_", " ", $logpages[$logpagename] ) ) == str_replace( "_", " ", $logpages[$logpagename] ) ) {
                     if( time() - $creationdate > 600 ) {
                         transclude( $afd['title'], logPageName( time() ) );
                     }
@@ -82,7 +82,7 @@ while( true ) {
             }
         }
         if( $cyclecounter == 1 ) {
-             $afdscore = 0;
+            $afdscore = 0;
             $afdstat = array( 0, 0, 0, 0, 0, 0, 0, 0, 0 );
             preg_match_all( $voteregex, substr( $afddata, strpos( $afddata, "==" ) ), $votes );
             $votecount = 0;

@@ -50,8 +50,8 @@ while( true ) {
     if( isset( $param1[1] ) ) $MIN_ARCHIVE = $param1[1];    
     
     $rfpp = $site->initPage( $RFPP_PAGE );
-		$archive = $site->initPage( $ARCHIVE_PAGE );
-		$archivedata = $archive->get_text( true );
+	$archive = $site->initPage( $ARCHIVE_PAGE );
+	$archivedata = $archive->get_text( true );
     $tobearchived = array();
     $pendingrequests = 0;
     $rfppdata = $rfpp->get_text( true );
@@ -250,8 +250,8 @@ while( true ) {
         $rfppdata = str_replace( "{{adminbacklog}}", "{{noadminbacklog}}", $rfppdata );
     }
 processarchive:
-		$archive = $site->initPage( $ARCHIVE_PAGE );
-		$archivedata = $archive->get_text( true );
+	$archive = $site->initPage( $ARCHIVE_PAGE );
+	$archivedata = $archive->get_text( true );
     preg_match_all( '/(\n==[^=].*?==.*?)(?=(?:\n==[^=])|$)/is', $archivedata, $oldarchivesections );
     $newarchivesections = array();
     foreach( $oldarchivesections[0] as $sect ) {
@@ -286,15 +286,15 @@ processarchive:
             if( !$rfpp->edit( $rfppdata, $summary ) ) continue;  
         }
         if( $newarchivedata != $archivedata ) {
-            $archive->edit( $newarchivedata, "Bot archiving ".count( $tobearchived )." old RFPP threads" );
             echo "Archiving ".count( $tobearchived )." requests.\n";
+            if( !$archive->edit( $newarchivedata, "Bot archiving ".count( $tobearchived )." old RFPP threads" ) ) goto processarchive;
         }
     } else {
         if( str_replace( "\n", "", $rfppdata ) != str_replace( "\n", "", $oldrfppdata ) ) {
             $summary = "Bot clerking, ".$pendingrequests." pending ";
             if( $pendingrequests == 1 ) $summary .= "request remains.";
             else $summary .= "requests remain.";
-            if( !$rfpp->edit( $rfppdata, $summary ) ) goto processarchive;  
+            if( !$rfpp->edit( $rfppdata, $summary ) ) continue;  
         }
     }
     sleep( 60*$RUN_FREQUENCY );
@@ -304,7 +304,7 @@ function isAlreadyUnprotected( $req ) {
     global $site;
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
-    $page = $site->initPage( $pagename );
+    $page = $site->initPage( $pagename, null, false );
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {
@@ -344,7 +344,7 @@ function isUnprotected( $req ) {
     global $site;
     $pagename = getFullPageTitle( $req );
     if( $pagename = "" ) return true;
-    $page = $site->initPage( $pagename );
+    $page = $site->initPage( $pagename, null, false );
     if( !$page->get_exists() ) return true;
     $r = $page->get_protection();
     if( empty( $r ) ) return true;
@@ -391,7 +391,7 @@ function isAlreadyProtected( $req ) {
     global $site;
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
-    $page = $site->initPage( $pagename );
+    $page = $site->initPage( $pagename, null, false );
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {
@@ -461,7 +461,7 @@ function isProtected( $req, $code ) {
     global $site;
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return true;
-    $page = $site->initPage( $pagename );
+    $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
         if( in_array( $code, array( "s", "semi" ) ) ) {

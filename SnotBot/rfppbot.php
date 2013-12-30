@@ -354,8 +354,8 @@ function isUnprotected( $req ) {
 function isRequesterBlocked( $req ) {
     global $site;
     $endloc = strpos( $req, "(UTC)" );
-    $startloc = strrpos(strtolower( $req ), "[[user", $endloc );
-    preg_match( '/\[\[User(?: talk)?:(.*?)(?:\||\]\])/i', $req, $requester );
+    $startloc = strrpos(strtolower( $req ), "[[user", $endloc-strlen( $req ) );
+    preg_match( '/\[\[User(?: talk)?:(.*?)(?:\||\]\])/i', substr( $req, $startloc, $endloc-$startloc ), $requester );
     $requester = trim( $requester[1] );
     $blocked = $site->initUser( $requester )->is_blocked();
     return $blocked;

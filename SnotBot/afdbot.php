@@ -147,30 +147,38 @@ while( true ) {
             echo "Error: Can't find target page for \"{$afd['title']}\"\n";
             continue;
         }
-        $targetpage = $site->initPage( $targetpagestr[1] );
-        if( !$targetpage->get_exists() ) {
-            echo "Target page is {$targetpage->get_title( false )}, but it doesn't exist.";
-            continue;
-        }
-        $redir = false;
-        if( $targetpage->redirectFollowed() ) $redir = true;
-        $targetpagedata = $targetpage->get_text( true );
-        $templateonpage = preg_match( '/\{\{\s*((Article for deletion\/dated)|(AfDM))/si', str_replace( '_', ' ', $targetpagedata ), $templateonpage );
-        if( !$templateonpage ) {
-            if( $redir ) {
-                $targetredirects[] = $afd['title'];
-                $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
+        try{    //Let's catch the fatal error in the event of a bad title
+            $targetpage = $site->initPage( $targetpagestr[1] );
+            if( !$targetpage->get_exists() ) {
+                echo "Target page is {$targetpage->get_title( false )}, but it doesn't exist.";
+                continue;
             }
-            else {
-                if( strpos( $afddata, "The following discussion is an archived debate of the proposed deletion of the article below" ) || strpos( $afddata, "This page is an archive of the proposed deletion of the article below." ) || strpos( $afddata, "'''This page is no longer live.'''" ) ) {
-                    if( !in_array( $afd['title'], $closedwrong ) ) $closedwrong[] = $afd['title'];
+            $redir = false;
+            if( $targetpage->redirectFollowed() ) $redir = true;
+            $targetpagedata = $targetpage->get_text( true );
+            $templateonpage = preg_match( '/\{\{\s*((Article for deletion\/dated)|(AfDM))/si', str_replace( '_', ' ', $targetpagedata ), $templateonpage );
+            if( !$templateonpage ) {
+                if( $redir ) {
+                    $targetredirects[] = $afd['title'];
+                    $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
+                }
+                else {
+                    if( strpos( $afddata, "The following discussion is an archived debate of the proposed deletion of the article below" ) || strpos( $afddata, "This page is an archive of the proposed deletion of the article below." ) || strpos( $afddata, "'''This page is no longer live.'''" ) ) {
+                        if( !in_array( $afd['title'], $closedwrong ) ) $closedwrong[] = $afd['title'];  
+                    }
                     else {
                         $itworked = addAfdTemplate( $targetpage, $object );
                         if( !$itworked ) $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
                     }
                 }
-            }
+            }    
         }
+        catch( BadTitle $e ) {
+            echo( "Error: $e\nPlacing a notice on the AfD\n\n" );
+            $object->append( "\n*<small>'''Automated comment:''' This AfD cannot be processed correctly because of an issue with the header.  Please make sure the header has only 1 article, and doesn't have any HTML encoded characters.~~~~</small>", "Automated comment: AfD can't be processed." );
+            $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
+        }
+        
     }
     if( $cyclecounter == 1 ) {
         $urgentstr = "__NOTOC__\nBelow are the top 25 [[WP:AFD|AfD]] discussions which are most urgently in need of attention from !voters.  The urgency for each AfD is calculated based on various statistics, including current number of votes, time until closing date, number of times relisted, overall discussion length, etc.  This page is updated by a [[User:Cyberbot I|bot]] roughly every 6 hours, and was last updated on ~~~~~.\n\n";
@@ -421,6 +429,11 @@ function warnculprit( $page ) {
 function addAfdTemplate( $page, $afdpage ) {
     global $site;
     $history = $afdpage->history( 1, "newer" );
+    $afdpagedata = $afdpage->get_text();
+    if( strpos( $afdpagedata, "The following discussion is an archived debate of the proposed deletion of the article below" ) || strpos( $afdpagedata, "This page is an archive of the proposed deletion of the article below." ) || strpos( $afdpagedata, "'''This page is no longer live.'''" ) ) {
+        echo "AfD is closed, aborting tag...\n";
+        return false;  
+    }
     $afdcreationdate = formatdate( $history[0]['timestamp'] );
     if( (time() - $afdcreationdate)/60 <=10 ) {
         echo "No AfD template on {$page->get_title( false )}, but AfD <10 minutes old, so skipping for now.\n";

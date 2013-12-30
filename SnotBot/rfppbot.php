@@ -81,7 +81,7 @@ while( true ) {
                  }
                  continue;
             }
-            if( in_array( $code, array( "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+            if( in_array( $code, array( "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
                 echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
@@ -153,7 +153,7 @@ while( true ) {
                     continue;
                 }
             }
-            if( in_array( $code, array( "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+            if( in_array( $code, array( "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
                 echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
@@ -212,7 +212,7 @@ while( true ) {
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
-            if( in_array( $code, array( "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+            if( in_array( $code, array( "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
                 echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;

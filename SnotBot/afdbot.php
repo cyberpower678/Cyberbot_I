@@ -551,9 +551,9 @@ function getCreationDate( $page ) {
             }
         }   
     }
-    preg_match_all( '/\*\'\'\'Automated comment:\'\'\' This AfD was not correctly transcluded to the log \(\[\[WP:AFDHOWTO\|step 3\]\]\)\.  I have transcluded it to \[\[Wikipedia\:Articles for deletion\/Log\/(\d{4}) ([A-Za-z]*) (\d{1,2})\]\].*?\<\!\-\-(Snotbot|Cyberbot I) relist\-\-\>/i', $data, $botrelist );
+    preg_match_all( '/\'\'\'Automated comment:\'\'\' This AfD was not correctly transcluded to the log \(\[\[WP:AFDHOWTO\|step 3\]\]\)\.  I have transcluded it to \[\[Wikipedia\:Articles for deletion\/Log\/(\d{4}) ([A-Za-z]*) (\d{1,2})\]\].*?\<\!\-\-(Snotbot|Cyberbot I) relist\-\-\>/i', $data, $botrelist );
     if( is_array( $botrelist[1] ) && !empty( $botrelist[1] ) ) {
-        $dates[] = formatdate( $botrelist[1][count($botrelist[1]) - 1]." ".$botrelist[2][count($botrelist[2]) - 1]." ".$botrelist[3][count($botrelist[3]) - 1] );    
+        $dates[] = formatdate( $botrelist[2][count($botrelist[2]) - 1]." ".$botrelist[3][count($botrelist[3]) - 1]." ".$botrelist[1][count($botrelist[1]) - 1] );    
     }
     $history = $page->history( 1, "newer" );
     $dates[] = formatdate( $history[0]['timestamp'] );

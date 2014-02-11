@@ -149,6 +149,7 @@ while( true ) {
         }
         try{    //Let's catch the fatal error in the event of a bad title
             $targetpage = $site->initPage( $targetpagestr[1] );
+            if( strpos( $object->get_text(), "*<small>'''Automated comment:''' This AfD cannot be processed" ) !== false || strpos( $object->get_text(), "<s><small>'''Automated comment:''' This AfD cannot be processed " ) === false ) $object->edit( str_replace( "<small>'''Automated comment:''' This AfD cannot be processed correctly because of an issue with the header.  Please make sure the header has only 1 article, and doesn't have any HTML encoded characters.", "<s><small>'''Automated comment:''' This AfD cannot be processed correctly because of an issue with the header.  Please make sure the header has only 1 article, and doesn't have any HTML encoded characters.</s>", $object->get_text() ), "AfD is now parsable.", true );
             if( !$targetpage->get_exists() ) {
                 echo "Target page is {$targetpage->get_title( false )}, but it doesn't exist.";
                 continue;
@@ -175,7 +176,7 @@ while( true ) {
         }
         catch( BadTitle $e ) {
             echo( "Error: $e\nPlacing a notice on the AfD\n\n" );
-            $object->append( "\n*<small>'''Automated comment:''' This AfD cannot be processed correctly because of an issue with the header.  Please make sure the header has only 1 article, and doesn't have any HTML encoded characters.~~~~</small>", "Automated comment: AfD can't be processed." );
+            if( strpos( $object->get_text(), "*<small>'''Automated comment:''' This AfD cannot be processed" ) === false || strpos( $object->get_text(), "<s><small>'''Automated comment:''' This AfD cannot be processed " ) !== false ) $object->append( "\n*<small>'''Automated comment:''' This AfD cannot be processed correctly because of an issue with the header.  Please make sure the header has only 1 article, and doesn't have any HTML encoded characters.~~~~</small>", "Automated comment: AfD can't be processed." );
             $checkedafds = array_diff( $checkedafds, array( $afd['title'] ) );
         }
         

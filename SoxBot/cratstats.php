@@ -42,7 +42,7 @@ while(true) {
 	echo "Processing RfA's!\n";
 
 	foreach ($matches[1] as $rfa) {
-		if ($rfa == "Front matter" || $rfa == "bureaucratship") {
+		if ($rfa == "Front matter" || $rfa == "bureaucratship" || $rfa == "Header") {
 			echo "Skipping non-rfa stuff\n";
 		} else {
 			$numrfa++;

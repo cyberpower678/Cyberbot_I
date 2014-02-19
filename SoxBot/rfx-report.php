@@ -41,7 +41,7 @@ while(true) {
     preg_match_all($findrfa, $rfabuffer, $matches);
     $out .= "! RfA candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report";
     foreach ($matches[2] as $rfa) {
-        if ($rfa != "Front matter" && $rfa != "bureaucratship") {
+        if ($rfa != "Front matter" && $rfa != "bureaucratship" && $rfa != "Header") {
             $result = processrfx($rfa);
             $out = $out . "\n|-\n" . $result;
             $numrfa++;

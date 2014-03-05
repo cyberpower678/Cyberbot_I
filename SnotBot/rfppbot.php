@@ -71,7 +71,7 @@ while( true ) {
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
-            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp" ) ) ) {
+            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
                  if( isProtected( $req, $code ) ) {
                     echo getFullPageTitle( $req ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
                     if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
@@ -131,7 +131,7 @@ while( true ) {
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
-            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp" ) ) ) {
+            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
                  if( isProtected( $req, $code ) ) {
                     echo getFullPageTitle( $req ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
                     if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
@@ -297,6 +297,8 @@ processarchive:
             if( !$rfpp->edit( $rfppdata, $summary ) ) continue;  
         }
     }
+    
+    echo "Sleeping for $RUN_FREQUENCY minutes...\n\n";
     sleep( 60*$RUN_FREQUENCY );
 }
 
@@ -305,6 +307,12 @@ function isAlreadyUnprotected( $req ) {
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
+    $logs = $site->logs( "protect", false, $pagename );
+    $lastprotectaction = 0;
+    if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    $logs = $site->logs( "stable", false, $pagename );
+    if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    if( time() - $lastprotectaction < 300 ) return false;
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {
@@ -345,6 +353,7 @@ function isUnprotected( $req ) {
     $pagename = getFullPageTitle( $req );
     if( $pagename = "" ) return true;
     $page = $site->initPage( $pagename, null, false );
+    $logs = $site->logs( "protect", false, $pagename );
     if( !$page->get_exists() ) return true;
     $r = $page->get_protection();
     if( empty( $r ) ) return true;
@@ -392,6 +401,12 @@ function isAlreadyProtected( $req ) {
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
+    $logs = $site->logs( "protect", false, $pagename );
+    $lastprotectaction = 0;
+    if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    $logs = $site->logs( "stable", false, $pagename );
+    if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    if( time() - $lastprotectaction < 300 ) return false;
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {
@@ -488,7 +503,7 @@ function isProtected( $req, $code ) {
             }
             return false;
         }
-        if( in_array( $code, array( "pd", "pend" ) ) ) {
+        if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2" ) ) ) {
             return isPCprotected( $pagename );
         }
     } else {

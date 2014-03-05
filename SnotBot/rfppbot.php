@@ -177,7 +177,7 @@ while( true ) {
             if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
             else $protstr = "";
             if( strpos( $protstr, "unprotect" ) !== false ) {
-                if( isAlreadyUnprotected( $req ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
+                if( isAlreadyUnprotected( $req ) && strpos( $req, "'''Automated comment:'''" ) === false && getProtectTime( $req ) > $PROTECT_BUFFER) {
                     echo getFullPageTitle( $req ).": Not handled, page is already unprotected\n";
                     $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This page appears to have already been unprotected.  Please confirm.~~~~\n\n", $rfppdata );     
                     continue;
@@ -307,12 +307,6 @@ function isAlreadyUnprotected( $req ) {
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
-    $logs = $site->logs( "protect", false, $pagename );
-    $lastprotectaction = 0;
-    if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
-    $logs = $site->logs( "stable", false, $pagename );
-    if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
-    if( time() - $lastprotectaction < 300 ) return false;
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {
@@ -385,14 +379,13 @@ function isRecentlyDenied( $req, $archivedata ) {
 function getProtectTime( $pagetitle ) {
     global $site;
     $pagetitle = getFullPageTitle( $pagetitle );
-    $data = $site->apiQuery( array( 'action'=>'query',
-        'list'=>'logevents',
-        'leaction'=>'protect/protect',
-        'lelimit'=>1,
-        'leprop'=>'timestamp|user|details',
-        'letitle'=>$pagetitle
-    ));
-    $dt = strtotime( $data['query']['logevents'][0]['timestamp'] );
+    $logs = $site->logs( "protect", false, $pagename );
+    $lastprotectaction = 0;
+    if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    $logs = $site->logs( "stable", false, $pagename );
+    if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+    if( time() - $lastprotectaction < 300 ) return false;
+    $dt = $lastprotectaction - time();
     return round( $dt/60.0, 0 );    
 }
 
@@ -401,12 +394,6 @@ function isAlreadyProtected( $req ) {
     $pagename = getFullPageTitle( $req );
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
-    $logs = $site->logs( "protect", false, $pagename );
-    $lastprotectaction = 0;
-    if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
-    $logs = $site->logs( "stable", false, $pagename );
-    if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
-    if( time() - $lastprotectaction < 300 ) return false;
     if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
     else return false;
     if( $page->get_exists() ) {

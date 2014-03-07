@@ -9,16 +9,16 @@ require_once('/data/project/cyberbot/database.inc');
 
 if( defined( 'USESIMPLE' ) ) {
 $site = Peachy::newWiki( "simple" );
-$db = new Database( 'simplewiki.labsdb', $toolserver_username, $toolserver_password, 'simplewiki_p' );
+$db = mysqli_connect( 'simplewiki.labsdb', $toolserver_username, $toolserver_password, 'simplewiki_p' );
 } elseif( defined( 'USEWIKIDATA' ) ) {
 $site = Peachy::newWiki( "wikidata" );
-$db = new Database( 'wikidatawiki.labsdb', $toolserver_username, $toolserver_password, 'wikidatawiki_p' );
+$db = mysqli_connect( 'wikidatawiki.labsdb', $toolserver_username, $toolserver_password, 'wikidatawiki_p' );
 } elseif( defined( 'USECOMMONS' ) ) {
 $site = Peachy::newWiki( "commons" );
-$db = new Database( 'commonswiki.labsdb', $toolserver_username, $toolserver_password, 'commonswiki_p' );
+$db = mysqli_connect( 'commonswiki.labsdb', $toolserver_username, $toolserver_password, 'commonswiki_p' );
 } else {
 $site = Peachy::newWiki( "soxbot" );
-$db = new Database( 'enwiki.labsdb', $toolserver_username, $toolserver_password, 'enwiki_p' );
+$db = mysqli_connect( 'enwiki.labsdb', $toolserver_username, $toolserver_password, 'enwiki_p' );
 }
 
 $site->set_runpage("User:Cyberbot I/Run/Adminstats");
@@ -53,185 +53,126 @@ foreach ($u as $name) {
 		initPage( $toedit )->edit($out,"Adminstats are not allowed for this user.",true);
 	}
 }
+
+mysqli_close( $db );
+
 function process ($rawuser) {
     global $site, $db;
-		$user = initUser( $rawuser );
-		$editcount = $user->get_editcount( false, $db );
-		$livecount = $user->get_editcount( false, $db, true );
-		
-		$out = "{{Adminstats/Core\n|edits=$livecount\n|ed=$editcount\n";
-		
-		$uid = $db->select(
-			'user',
-			'user_id',
-			array(
-				'user_name' => $rawuser
-			)
-		);
-		$uid = $uid[0]['user_id'];
-		if( !$uid ) return;
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_type' => 'newusers'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|created={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'delete',
-				'log_type' => 'delete'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|deleted={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'restore',
-				'log_type' => 'delete'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|restored={$res[0]['count']}\n";
-		
-		 
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'block',
-				'log_type'=> 'block'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|blocked={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'protect',
-				'log_type' => 'protect'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|protected={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'unprotect',
-				'log_type' => 'protect'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|unprotected={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'rights',
-				'log_type' => 'rights'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|rights={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'reblock',
-				'log_type'=> 'block'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|reblock={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'unblock',
-				'log_type'=> 'block'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|unblock={$res[0]['count']}\n";
-				
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'modify',
-				'log_type' => 'protect'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|modify={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_action' => 'renameuser',
-				'log_type' => 'renameuser'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|rename={$res[0]['count']}\n";
-		
-		$res = $db->select(
-			'logging_userindex',
-			'count(log_action) AS count',
-			array(
-				'log_user' => $uid,
-				'log_type' => 'import'
-			)
-		);
-		if( !$res ) return;
-		
-		$out .= "|import={$res[0]['count']}\n";
-				
-		$out .= '|style={{{style|}}}}}';
-		echo $out;
-		echo "\n";
-		$toedit = "Template:Adminstats/$rawuser";
-		
-		initPage( $toedit )->edit($out,"Updating Admin Stats",true);
+	$user = initUser( $rawuser );
+	$editcount = $user->get_editcount( false, $db );
+	$livecount = $user->get_editcount( false, $db, true );
+	
+	$out = "{{Adminstats/Core\n|edits=$livecount\n|ed=$editcount\n";
+	
+	    if( $result = mysqli_query( $db, "SELECT user_id FROM user WHERE `user_name` = '{$rawuser}';" ) ) {
+        $uid = mysqli_fetch_assoc( $result );
+        $uid = $uid['user_id'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'newusers';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+        
+    $out .= "|created=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'delete';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|deleted=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'restore';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|restored=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'block';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|blocked=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'protect';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|protected=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'unprotect';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|unprotected=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'rights' AND `log_action` = 'rights';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|rights=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'reblock';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|reblock=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'unblock';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|unblock=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'modify';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|modify=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'renameuser' AND `log_action` = 'renameuser';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|rename=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'import';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|import=$res\n";
+			
+	$out .= '|style={{{style|}}}}}';
+    unset( $res );
+	echo $out;
+	echo "\n";
+	$toedit = "Template:Adminstats/$rawuser";
+	
+	initPage( $toedit )->edit($out,"Updating Admin Stats",true);
 }
 
 function toDie($newdata) {

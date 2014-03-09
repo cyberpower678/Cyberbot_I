@@ -384,8 +384,7 @@ function getProtectTime( $pagetitle ) {
     if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
     $logs = $site->logs( "stable", false, $pagename );
     if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
-    if( time() - $lastprotectaction < 300 ) return false;
-    $dt = $lastprotectaction - time();
+    $dt = time() - $lastprotectaction;
     return round( $dt/60.0, 0 );    
 }
 

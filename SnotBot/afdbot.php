@@ -530,7 +530,7 @@ function transclude( $page, $logpagename ) {
     $newlogpagedata = substr_replace( $logpagedata, "{{".$page."}}\n", $insertionindex, 0 );
     
     $logpage->edit( $newlogpagedata, "Bot automatically transcluding [[$page]]." );
-    $object->edit( $pagedata."\n*<small>'''Automated comment:''' This AfD was not correctly transcluded to the log ([[WP:AFDHOWTO|step 3]]).  I have transcluded it to [[{$logpage->get_title()}]].  ~~~~</small><!--Cyberbot I relist-->", "Automated comment: AfD was not correctly transcluded." );   
+    $object->edit( $pagedata."\n*<small>'''Automated comment:''' This AfD was not correctly [[WP:TRANSCLUDE|transcluded]] to the log ([[WP:AFDHOWTO|step 3]]).  I have transcluded it to [[{$logpage->get_title()}]].  ~~~~</small><!--Cyberbot I relist-->", "Automated comment: AfD was not correctly [[WP:TRANSCLUDE|transcluded]]." );   
 }
 
 function formatdate( $d ) {
@@ -552,7 +552,7 @@ function getCreationDate( $page ) {
             }
         }   
     }
-    preg_match_all( '/\'\'\'Automated comment:\'\'\' This AfD was not correctly transcluded to the log \(\[\[WP:AFDHOWTO\|step 3\]\]\)\.  I have transcluded it to \[\[Wikipedia\:Articles for deletion\/Log\/(\d{4}) ([A-Za-z]*) (\d{1,2})\]\].*?\<\!\-\-(Snotbot|Cyberbot I) relist\-\-\>/i', $data, $botrelist );
+    preg_match_all( '/\'\'\'Automated comment:\'\'\' This AfD was not correctly transcluded to the log \(\[\[WP:AFDHOWTO\|step 3\]\]\)\.  I have .*? it to \[\[Wikipedia\:Articles for deletion\/Log\/(\d{4}) ([A-Za-z]*) (\d{1,2})\]\].*?\<\!\-\-(Snotbot|Cyberbot I) relist\-\-\>/i', $data, $botrelist );
     if( is_array( $botrelist[1] ) && !empty( $botrelist[1] ) ) {
         $dates[] = formatdate( $botrelist[2][count($botrelist[2]) - 1]." ".$botrelist[3][count($botrelist[3]) - 1]." ".$botrelist[1][count($botrelist[1]) - 1] );    
     }

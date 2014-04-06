@@ -98,14 +98,10 @@ while(true) {
 		$text = $page->get_text();
 		
 		$newtext = str_ireplace($tosearch, $toreplace, $text);
-		
-		$diff = Diff::load('unified', $text, $newtext);
 					
 		if( $newtext != $text ) {
-			$out = "== $pg ==\n<pre>".$textdiff."</pre>\n\n";
-			echo $out."\n\n";
 				
-				$page->edit($newtext,"Dating maintenance tags (bot edit)",true);
+            $page->edit($newtext,"Dating maintenance tags (bot edit)",true);
 				
 			$c++;
 			sleep(3);

@@ -102,7 +102,7 @@ class BookReport {
 	}
 
 	private function canEditTalk() {
-		return $this->w->excluded(str_replace("Book:", "Book talk:", $this->book));
+		return $this->w->excluded(substr_replace($this->book, "Book talk:", 0, 5));
 	}
 
 	private function checkCategory() {
@@ -511,7 +511,7 @@ class BookReport {
 		$abs = $this->summary['avg']-$l['avg'];
 				
 		if (abs($abs) >= 0) {
-			$tp = str_replace("Book:", "Book talk:", $this->book);
+			$tp = substr_replace($this->book, "Book talk:", 0, 5);
 			$t = $this->maintalk = $this->w->getPage($tp);
 			if ($t == "" || $t == null) {
 				$t = '{{WBOOKS|class=book}}'.PHP_EOL.$this->reportStr;

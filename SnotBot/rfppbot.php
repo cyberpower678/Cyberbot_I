@@ -357,6 +357,7 @@ function isUnprotected( $req ) {
 function isRequesterBlocked( $req ) {
     global $site;
     $endloc = strpos( $req, "(UTC)" );
+    if( $endloc === false ) return false;
     $startloc = strrpos(strtolower( $req ), "[[user", $endloc-strlen( $req ) );
     preg_match( '/\[\[User(?: talk)?:(.*?)(?:\||\]\])/i', substr( $req, $startloc, $endloc-$startloc ), $requester );
     $requester = trim( $requester[1] );
@@ -365,7 +366,7 @@ function isRequesterBlocked( $req ) {
 }
 
 function isRecentlyDenied( $req, $archivedata ) {
-    preg_match( '/=\s*(\{\{l\w+\|.*?\}\})\s*=/i', $req, $header );
+    preg_match( '/=\s*(\{\{[l|p]\w+\|.*?\}\})\s*=/i', $req, $header );
     if( strpos( $archivedata, $header[1] ) !== false ) {
         $start = strpos( $archivedata, $header[1] );
         $end = strpos( substr( $archivedata, $start ), "\n==" );
@@ -378,7 +379,7 @@ function isRecentlyDenied( $req, $archivedata ) {
 
 function getProtectTime( $pagetitle ) {
     global $site;
-    $pagetitle = getFullPageTitle( $pagetitle );
+    $pagename = getFullPageTitle( $pagetitle );
     $logs = $site->logs( "protect", false, $pagename );
     $lastprotectaction = 0;
     if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
@@ -505,7 +506,7 @@ function isProtected( $req, $code ) {
 }
 
 function getFullPageTitle( $req ) {
-    preg_match( '/=\s*\{\{(l\w+)\|(.*?)\}\}\s*=/i', $req, $header );
+    preg_match( '/=\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*=/i', $req, $header );
     $template = trim( $header[1] );
     $pagename = trim( $header[2] );
     $namespace = "";
@@ -542,6 +543,10 @@ function getFullPageTitle( $req ) {
     elseif( $template == "lnt" ) {
         $namespace = substr( $pagename, 0, strpos( $pagename, "|" ) )." talk:";
         $pagename = substr( $pagename, strpos( $pagename, "|" )+1 );
+    }
+    elseif( $template == "pagelinks" ) {
+        $namespace = substr( $pagename, 0, strpos( $pagename, ":" ) ).":";
+        $pagename = substr( $pagename, strpos( $pagename, ":" )+1 );
     }
     if( preg_match( '/^(Talk|Template|Wikipedia|User|Category|Portal|Help|Book|MediaWiki)( talk)?:/i', $pagename, $garbage ) ) $pagename = substr( $pagename, strpos( $pagename, "|" ) );
     return $namespace.$pagename;

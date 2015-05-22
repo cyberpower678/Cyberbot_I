@@ -19,6 +19,8 @@ $BACKLOG_ADD_LIMIT = 10;
 $BACKLOG_REMOVE_LIMIT = 4;
 $RFPP_PAGE = "Wikipedia:Requests for page protection";
 $ARCHIVE_PAGE = "Wikipedia:Requests for page protection/Rolling archive";
+$requesterblocked = "*'''Automated comment:''' This user who requested protection has been blocked.";
+$normalized = "*'''Automated comment:''' This request has been formatted the old way.  I have attempted to fix the request using the new formatting.";
 
 while( true ) {
     echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
@@ -47,7 +49,8 @@ while( true ) {
         $archive = $site->initPage( $ARCHIVE_PAGE );
     }
     preg_match( '/\n\|MIN_ARCHIVE\s*=\s*(\d+)/i', $config, $param1 );
-    if( isset( $param1[1] ) ) $MIN_ARCHIVE = $param1[1];    
+    if( isset( $param1[1] ) ) $MIN_ARCHIVE = $param1[1];  
+  
     
     $rfpp = $site->initPage( $RFPP_PAGE );
 	$archive = $site->initPage( $ARCHIVE_PAGE );
@@ -62,62 +65,67 @@ while( true ) {
     
     preg_match_all( '/(====.*?====.*?)(?===|$)/si', $protectionrequests, $requestsalpha );
     foreach( $requestsalpha[0] as $req ) {
+        if( normalize( $req ) && !checkComments( $req, $normalized ) ) {
+            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$normalized~~~~\n\n", $rfppdata );
+        }
         if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
             preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
             $code = strtolower( $code[1] );
             if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
                 $pendingrequests++;
-                echo getFullPageTitle( $req ).": Discussion ongoing, not actioned yet\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
                  if( isProtected( $req, $code ) ) {
-                    echo getFullPageTitle( $req ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
                     if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
                  } else {
-                     echo getFullPageTitle( $req ).": Marked as protected, but not protected\n";
-                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && strpos( $req, "'''Automated comment:'''" ) === false ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' Page has not been protected.~~~~\n\n", $rfppdata );
+                     echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
+                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notprotected ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notprotected~~~~\n\n", $rfppdata );
                  }
                  continue;
             }
             if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "do", "done" ) ) ) {
-                echo getFullPageTitle( $req ).": Marked as done ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo getFullPageTitle( $req ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
                 $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             $pendingrequests++;
-            echo getFullPageTitle( $req ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
             if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+            checkComments( $req, false, $code );
         }
         else {
-            echo getFullPageTitle( $req ).": No response yet\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
             $pendingrequests++;
-            if( isAlreadyProtected( $req ) && strpos( $req, "'''Automated comment:'''" ) === false && getProtectTime( $req ) > $PROTECT_BUFFER ) {
-                echo getFullPageTitle( $req ).": Not handled, page is already protected\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This page appears to already be protected. Please confirm.~~~~\n\n", $rfppdata );
+            if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
                 continue;    
             }
-            if( isRecentlyDenied( $req, $archivedata ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                echo getFullPageTitle( $req ).": Not handled, another request was recently denied (prot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' A request for protection/unprotection was recently made for this page, and was denied at some point within the last [[WP:RFPPA|".$ARCHIVE_LENGTH." days]].~~~~\n\n", $rfppdata );
+            if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (prot)\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
                 continue;   
             }
-            if( isRequesterBlocked( $req ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                echo getFullPageTitle( $req ).": Not handled, requester is blocked (prot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This user who requested protection has been blocked.~~~~\n\n", $rfppdata );
+            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (prot)\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
                 continue;    
-            }  
+            }
+            checkComments( $req, false, false );  
         }
     }
     preg_match_all( '/(====.*?====.*?)(?===|$)/si', $unprotectionrequests, $requestsalpha );
@@ -127,78 +135,85 @@ while( true ) {
             $code = strtolower( $code[1] );
             if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
                 $pendingrequests++;
-                echo getFullPageTitle( $req ).": Discussion ongoing, not actioned yet\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
                  if( isProtected( $req, $code ) ) {
-                    echo getFullPageTitle( $req ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
                     if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
                  } else {
-                     echo getFullPageTitle( $req ).": Marked as protected, but not protected\n";
-                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && strpos( $req, "'''Automated comment:'''" ) === false ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' Page has not been protected.~~~~\n\n", $rfppdata );
+                     echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
+                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notprotected ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notprotected~~~~\n\n", $rfppdata );
                  }
                  continue;
             }
             if( in_array( $code, array( "u", "unpr", "au", "isun", "ad", "isdo" ) ) ) {
                 if( isUnprotected( $req ) ) {
-                    echo getFullPageTitle( $req ).": Handled ".timeSinceLastEdit." minutes ago\n";
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit." minutes ago\n";
                     if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
                 }  else {
-                    if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                        echo getFullPageTitle( $req ).": Marked as unprotected, but not unprotected\n";
-                        $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' Page has not been unprotected.~~~~\n\n" );
+                    if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notunprotected ) ) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as unprotected, but not unprotected\n";
+                        $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notunprotected~~~~\n\n" );
                     }
                     continue;
                 }
             }
             if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "do", "done" ) ) ) {
-                echo getFullPageTitle( $req ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo getFullPageTitle( $req ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
                 $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             $pendingrequests++;
-            echo getFullPageTitle( $req ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
             if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+            checkComments( $req, false, $code );
         } else {
-            echo getFullPageTitle( $req ).": No response yet\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
             $pendingrequests++;
-            if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
+            if( preg_match_all( '/\'\'\'(.*?)\'\'\'/i', $req, $protstrs ) ) {
+                foreach( $protstrs[1] as $protstr) {
+                    $protstr = strtolower( $protstr );
+                    if( strpos( $protstr, "{{" ) === false ) break;
+                }                                        
+            }
             else $protstr = "";
             if( strpos( $protstr, "unprotect" ) !== false ) {
-                if( isAlreadyUnprotected( $req ) && strpos( $req, "'''Automated comment:'''" ) === false && getProtectTime( $req ) > $PROTECT_BUFFER) {
-                    echo getFullPageTitle( $req ).": Not handled, page is already unprotected\n";
-                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This page appears to have already been unprotected.  Please confirm.~~~~\n\n", $rfppdata );     
+                if( isAlreadyUnprotected( $req ) && !checkComments( $req, $alreadyunprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already unprotected\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyunprotected~~~~\n\n", $rfppdata );     
                     continue;
                 }
             } else {
-                if( isAlreadyProtected( $req ) && strpos( $req, "'''Automated comment:'''" ) === false && getProtectTime( $req ) > $PROTECT_BUFFER ) {
-                    echo getFullPageTitle( $req ).": Not handled, page is already protected\n";
-                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This page appears to already be protected. Please confirm.~~~~\n\n", $rfppdata );
+                if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
                     continue;    
                 }
             }
-            if( isRecentlyDenied( $req, $archivedata ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                echo getFullPageTitle( $req ).": Not handled, another request was recently denied (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' A request for protection/unprotection was recently made for this page, and was denied at some point within the last [[WP:RFPPA|".$ARCHIVE_LENGTH." days]].~~~~\n\n", $rfppdata );
+            if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (unprot)\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
                 continue;   
             }
-            if( isRequesterBlocked( $req ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                echo getFullPageTitle( $req ).": Not handled, requester is blocked (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This user who requested unprotection has been blocked.~~~~\n\n", $rfppdata );
+            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
                 continue;    
-            } 
+            }
+            checkComments( $req, false, false ); 
         }
     }
     preg_match_all( '/(====.*?====.*?)(?===|$)/si', $editrequests, $requestsalpha );
@@ -208,37 +223,39 @@ while( true ) {
             $code = strtolower( $code[1] );
             if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
                 $pendingrequests++;
-                echo getFullPageTitle( $req ).": Discussion ongoing, not actioned yet\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo getFullPageTitle( $req ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "do", "done" ) ) ) {
-                echo getFullPageTitle( $req ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
                 if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo getFullPageTitle( $req ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
                 $tobearchived[] = trim( $req, "\n" )."\n\n";
                 continue;
             }
             $pendingrequests++;
-            echo getFullPageTitle( $req ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
             if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+            checkComments( $req, false, $code );
         } else {
-            echo getFullPageTitle( $req ).": No response yet\n";
+            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
             $pendingrequests++;
-            if( isRequesterBlocked( $req ) && strpos( $req, "'''Automated comment:'''" ) === false ) {
-                echo getFullPageTitle( $req ).": Not handled, requester is blocked (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n*'''Automated comment:''' This user who requested this edit has been blocked.~~~~\n\n", $rfppdata );
+            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
+                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
                 continue;    
-            } 
-        }
+            }
+            checkComments( $req, false, false ); 
+        }    
     }
     echo $pendingrequests." pending requests.\n";
     if( $pendingrequests >= $BACKLOG_ADD_LIMIT ) {
@@ -304,11 +321,51 @@ processarchive:
 
 function isAlreadyUnprotected( $req ) {
     global $site;
+    if( preg_match_all( '/\'\'\'(.*?)\'\'\'/i', $req, $protstrs ) ) {
+        foreach( $protstrs[1] as $protstr) {
+            $protstr = strtolower( $protstr );
+            if( strpos( $protstr, "{{" ) === false ) break;
+        }                                        
+    }
+    else return false;
     $pagename = getFullPageTitle( $req );
+    if( is_array( $pagename ) ) {
+        foreach( $pagename as $tpage ) {
+            $t = true;
+            $page = $site->initPage( $tpage, null, false );
+            if( $page->get_exists() ) {
+                $protection = $page->get_protection();
+                if( strpos( $protstr, "move" ) !== false ) {
+                    if( in_array_recursive( "move", $protection ) ) {
+                        foreach( $protection as $p ) {
+                            if( $p['type'] == 'move' ) $t = false;
+                        }
+                    }
+                }
+                if( in_array_recursive( "edit", $protection ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' ) $t = false;
+                    }
+                }
+                if( isPCprotected( $tpge ) ) $t = false;
+                
+            }
+            else {
+                $protection = $site->initPage( $tpage );
+                if( strpos( $protstr, "creat" ) !== false || strpos( $protstr, "salt" ) !== false ) {
+                    if( in_array_recursive( "create", $protection ) ) {
+                        foreach( $protection as $p ) {
+                            if( $p['type'] == 'create' ) $t = false;
+                        }
+                    }
+                }
+            }
+            if( $t ) return true;
+        }
+        return false;
+    }
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
-    if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
-    else return false;
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
         if( strpos( $protstr, "move" ) !== false ) {
@@ -345,6 +402,18 @@ function isAlreadyUnprotected( $req ) {
 function isUnprotected( $req ) {
     global $site;
     $pagename = getFullPageTitle( $req );
+    if( is_array( $pagename ) ) {
+        foreach( $pagename as $tpage ) {
+            $t = false;
+            $page = $site->initPage( $tpage, null, false );
+            $logs = $site->logs( "protect", false, $tpage );
+            if( !$page->get_exists() ) $t = true;
+            $r = $page->get_protection();
+            if( empty( $r ) ) $t = true;
+            if( !$t ) return false;    
+        }
+        return true;
+    }
     if( $pagename = "" ) return true;
     $page = $site->initPage( $pagename, null, false );
     $logs = $site->logs( "protect", false, $pagename );
@@ -366,7 +435,7 @@ function isRequesterBlocked( $req ) {
 }
 
 function isRecentlyDenied( $req, $archivedata ) {
-    preg_match( '/=\s*(\{\{[l|p]\w+\|.*?\}\})\s*=/i', $req, $header );
+    preg_match( '/(\{\{[l|p]\w+\|.*?\}\})/i', $req, $header );
     if( strpos( $archivedata, $header[1] ) !== false ) {
         $start = strpos( $archivedata, $header[1] );
         $end = strpos( substr( $archivedata, $start ), "\n==" );
@@ -379,9 +448,19 @@ function isRecentlyDenied( $req, $archivedata ) {
 
 function getProtectTime( $pagetitle ) {
     global $site;
-    $pagename = getFullPageTitle( $pagetitle );
-    $logs = $site->logs( "protect", false, $pagename );
     $lastprotectaction = 0;
+    $pagename = getFullPageTitle( $pagetitle );
+    if( is_array( $pagename ) ) {
+        foreach( $pagename as $page ) {
+            $logs = $site->logs( "protect", false, $page );
+            if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+            $logs = $site->logs( "stable", false, $page );
+            if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
+            $dt = time() - $lastprotectaction;
+        }
+        return round( $dt/60.0, 0 );    
+    }
+    $logs = $site->logs( "protect", false, $pagename );
     if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
     $logs = $site->logs( "stable", false, $pagename );
     if( isset( $logs[0]['timestamp'] ) && $lastprotectaction < strtotime( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
@@ -391,11 +470,55 @@ function getProtectTime( $pagetitle ) {
 
 function isAlreadyProtected( $req ) {
     global $site;
+    if( preg_match_all( '/\'\'\'(.*?)\'\'\'/i', $req, $protstrs ) ) {
+        foreach( $protstrs[1] as $protstr) {
+            $protstr = strtolower( $protstr );
+            if( strpos( $protstr, "{{" ) === false ) break;
+        }                                        
+    } else return false;
     $pagename = getFullPageTitle( $req );
+    if( is_array( $pagename ) ) {
+        foreach( $pagename as $tpage ) {
+            $page = $site->initPage( $tpage, null, false );
+            $t = false;
+            if( $page->get_exists() ) {
+                $protection = $page->get_protection();
+                if( strpos( $protstr, "semi" ) !== false ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) $t = true;
+                    }
+                }
+                if( strpos( $protstr, "full" ) !== false ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) $t = true;
+                    }   
+                }
+                if( strpos( $protstr, "template" ) !== false ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'templateeditor' ) $t = true;
+                    }   
+                }
+                if( strpos( $protstr, "move" ) !== false ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'move' ) $t = true;
+                    }
+                }
+                if( strpos( $protstr, "pending" ) !== false && isPCprotected( $tpage ) ) $t = true;
+            }
+            else {
+                $protection = $page->get_protection();
+                if( strpos( $protstr, "creat" ) !== false || strpos( $protstr, "salt" ) !== false ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'create' ) $t = true;
+                    }
+                }
+            }
+            if( $t == true ) return true;
+        }
+        return false; 
+    }
     if( $pagename == "" ) return false;
     $page = $site->initPage( $pagename, null, false );
-    if( preg_match( '/\'\'\'(.*?)\'\'\'/i', $req, $protstr ) ) $protstr = strtolower( $protstr[1] );
-    else return false;
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
         if( strpos( $protstr, "semi" ) !== false ) {
@@ -462,6 +585,49 @@ function timeSinceLastEdit( $req ) {
 function isProtected( $req, $code ) {
     global $site;
     $pagename = getFullPageTitle( $req );
+    if( is_array( $pagename ) ) {
+        foreach( $pagename as $tpage ) {
+            $page = $site->initPage( $tpage, null, false );
+            if( $page->get_exists() ) {
+                $protection = $page->get_protection();
+                $t = false;
+                if( in_array( $code, array( "s", "semi" ) ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) $t = true;
+                    }
+                }
+                if( in_array( $code, array( "p", "full" ) ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) $t = true;
+                    }
+                }
+                if( in_array( $code, array( "tp", "temp" ) ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'edit' && $p['level'] == 'templateeditor' ) $t = true;
+                    }
+                }
+                if( in_array( $code, array( "m", "move" ) ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'move' ) $t = true;
+                    }
+                }
+                if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2" ) ) ) {
+                    $t = isPCprotected( $tpage );
+                }
+                if( $t == false ) return false;
+            } else {
+                $t = false;
+                $protection = $page->get_protection();
+                if( in_array( $code, array( "t", "salt" ) ) ) {
+                    foreach( $protection as $p ) {
+                        if( $p['type'] == 'create' ) $t = true;
+                    }
+                }
+                if( $t == false ) return false;
+            }
+        }
+        return true;
+    }
     if( $pagename == "" ) return true;
     $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
@@ -505,10 +671,97 @@ function isProtected( $req, $code ) {
     return true;
 }
 
+function normalize( &$req ) {
+    global $rfppdata;
+    if( preg_match( '/====\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*====/i', $req, $header ) ) {
+        $rfppdata = str_replace( $req, $req = preg_replace( '/====\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*====/i', "==== [[".getFullPageTitle( $req )."]] ====\n*{{".trim( $header[1] )."|".trim( $header[2] )."}}\n\n", $req ), $rfppdata );
+        return true;
+    }  
+    return false; 
+}
+
+function checkComments( &$req, $searchValue = false, $code = "" ) {
+    global $rfppdata, $notprotected, $notunprotected, $requesterblocked;
+    if( $searchValue === false ) {
+        $req2 = $req;
+        if( strpos( $req, $notprotected ) !== false && strpos( $req, "<s>$notprotected</s>" ) === false ) {
+            if( isProtected( $req, $code ) ) {
+                $req2 = str_replace( $notprotected, "<s>$notprotected</s>", $req );   
+            } 
+        }
+        if( strpos( $req, $notunprotected ) !== false && strpos( $req, "<s>$notunprotected</s>" ) === false ) {
+            if( isUnprotected( $req ) ) {
+                $req2 = str_replace( $notunprotected, "<s>$notunprotected</s>", $req );   
+            } 
+        }
+        if( strpos( $req, $requesterblocked ) !== false && strpos( $req, "<s>$notprotected</s>" ) === false ) {
+            if( isRequesterBlocked( $req ) ) {
+                $req2 = str_replace( $requesterblocked, "<s>$requesterblocked</s>", $req );   
+            } 
+        }
+        $rfppdata = str_replace( $req, $req2, $rfppdata );
+        $req = $req2;
+        unset( $req2 );
+        return true;
+    } else {
+        if( strpos( $req, $searchValue ) !== false ) return true;
+        else return false;
+    }
+}
+
 function getFullPageTitle( $req ) {
-    preg_match( '/=\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*=/i', $req, $header );
-    $template = trim( $header[1] );
-    $pagename = trim( $header[2] );
+    preg_match_all( '/\{\{([l|p]\w+)\|(.*?)\}\}/i', $req, $header );
+    if( count($header[0]) > 1 ) {
+        $returnArray = array();
+        foreach( $header[0] as $t=>$p ) {
+            $template = trim( $header[1][$t] );
+            $pagename = trim( $header[2][$t] );
+            $namespace = "";
+            if( $template == "lat" ) $namespace = "Talk:";
+            elseif( $template == "ld" ) $namespace = "Draft:";
+            elseif( $template == "ldt" ) $namespace = "Draft talk:";
+            elseif( $template == "lt" ) $namespace = "Template:";
+            elseif( $template == "ltt" ) $namespace = "Template talk:";
+            elseif( $template == "lw" ) $namespace = "Wikipedia:";
+            elseif( $template == "lwt" ) $namespace = "Wikipedia talk:";
+            elseif( $template == "lafd" ) $namespace = "Wikipedia:Articles for deletion/";
+            elseif( $template == "lu" ) $namespace = "User:";
+            elseif( $template == "lut" ) $namespace = "User talk:";
+            elseif( $template == "lc" ) $namespace = "Category:";
+            elseif( $template == "lct" ) $namespace = "Category talk:";
+            elseif( $template == "lp" ) $namespace = "Portal:";
+            elseif( $template == "lpt" ) $namespace = "Portal talk:";
+            elseif( $template == "lh" ) $namespace = "Help:";
+            elseif( $template == "lht" ) $namespace = "Help talk:";
+            elseif( $template == "lb" ) $namespace = "Book:";
+            elseif( $template == "lbt" ) $namespace = "Book talk:";
+            elseif( $template == "lm" ) $namespace = "MediaWiki:";
+            elseif( $template == "lmt" ) $namespace = "MediaWiki talk:";
+            elseif( $template == "lf" ) $namespace = "File:";
+            elseif( $template == "lft" ) $namespace = "File talk:";
+            elseif( $template == "lttxt" ) $namespace = "TimedTex:";
+            elseif( $template == "ltxtt" ) $namespace = "TimedText talk:";
+            elseif( $template == "lmd" ) $namespace = "Module:";
+            elseif( $template == "lmdt" ) $namespace = "Module talk:";
+            elseif( $template == "ln" ) {
+                $namespace = substr( $pagename, 0, strpos( $pagename, "|" ) ).":";
+                $pagename = substr( $pagename, strpos( $pagename, "|" )+1 );
+            }
+            elseif( $template == "lnt" ) {
+                $namespace = substr( $pagename, 0, strpos( $pagename, "|" ) )." talk:";
+                $pagename = substr( $pagename, strpos( $pagename, "|" )+1 );
+            }
+            elseif( $template == "pagelinks" ) {
+                $namespace = substr( $pagename, 0, strpos( $pagename, ":" ) ).":";
+                $pagename = substr( $pagename, strpos( $pagename, ":" )+1 );
+            }
+            if( preg_match( '/^(Talk|Template|Wikipedia|User|Category|Portal|Help|Book|MediaWiki)( talk)?:/i', $pagename, $garbage ) ) $pagename = substr( $pagename, strpos( $pagename, "|" ) );
+            $returnArray[] = $namespace.$pagename;
+        }
+        return $returnArray;    
+    }
+    $template = trim( $header[1][0] );
+    $pagename = trim( $header[2][0] );
     $namespace = "";
     if( $template == "lat" ) $namespace = "Talk:";
     elseif( $template == "ld" ) $namespace = "Draft:";

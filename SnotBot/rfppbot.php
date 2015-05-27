@@ -19,12 +19,13 @@ $BACKLOG_ADD_LIMIT = 10;
 $BACKLOG_REMOVE_LIMIT = 4;
 $RFPP_PAGE = "Wikipedia:Requests for page protection";
 $ARCHIVE_PAGE = "Wikipedia:Requests for page protection/Rolling archive";
-$notprotected = "*'''Automated comment:''' One or more pages in this request have not been protected.";
+$notprotected = "*'''Automated comment:''' {{yo|{user}}} One or more pages in this request have not been protected.";
 $alreadyunprotected = "*'''Automated comment:''' One or more pages in this request appear to have already been unprotected.  Please confirm.";
 $alreadyprotected = "*'''Automated comment:''' One or more pages in this request appear to already be protected. Please confirm.";
 $requesterblocked = "*'''Automated comment:''' This user who requested protection has been blocked.";
-$notunprotected = "*'''Automated comment:''' One or more pages in this request have not been unprotected.";
-$normalized = "*'''Automated comment:''' This request has been formatted the old way.  I have attempted to fix the request using the new formatting.";
+$notunprotected = "*'''Automated comment:''' {{yo|{user}}} One or more pages in this request have not been unprotected.";
+$normalized = "*'''Automated comment:''' {{yo|{user}}} This request has been formatted the old way.  I have attempted to fix the request using the new formatting.";
+$unreadable = "*'''Automated comment:''' {{yo|{user}}} This request cannot be parsed.  Please ensure it follows formatting consistent with the current or previous methods of submission.";
 
 while( true ) {
     echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
@@ -67,223 +68,245 @@ while( true ) {
     $protectionrequests = $rfpp->get_text( false, "Current requests for increase in protection level" );
     $unprotectionrequests = $rfpp->get_text( false, "Current requests for reduction in protection level" );
     $editrequests = $rfpp->get_text( false, "Current requests for edits to a protected page" );
+    echo "Sorting requests...\n\n";
+    $rfppdata = str_replace( $protectionrequests, sortSection( $protectionrequests )."\n\n", $rfppdata );
+    $rfppdata = str_replace( $unprotectionrequests, sortSection( $unprotectionrequests )."\n\n", $rfppdata );
+    $rfppdata = str_replace( $editrequests, sortSection( $editrequests )."\n\n", $rfppdata );
     
     preg_match_all( '/(===?=.*?===?=.*?)(?===|$)/si', $protectionrequests, $requestsalpha );
     foreach( $requestsalpha[0] as $req ) {
-        if( normalize( $req ) && !checkComments( $req, $normalized ) ) {
-            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$normalized~~~~\n\n", $rfppdata );
+        if( normalize( $req ) && !checkComments( $req, str_replace( "{user}", getRequester( $req ), $normalized ) ) ) {
+            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester( $req ), $normalized )."~~~~\n\n", $rfppdata );
         }
-        if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
-            preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
-            $code = strtolower( $code[1] );
-            if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
+        if( getFullPageTitle( $req ) !== false ) {
+            if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
+                preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
+                $code = strtolower( $code[1] );
+                if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
+                    $pendingrequests++;
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
+                     if( isProtected( $req, $code ) ) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
+                        if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
+                     } else {
+                         echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
+                         if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, str_replace( "{user}", getRequestHandler($req), $notprotected ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notprotected )."~~~~\n\n", $rfppdata );
+                     }
+                     checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                     continue;
+                }
+                if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "do", "done" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit( $req )." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                    $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
                 $pendingrequests++;
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+                if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
             }
-            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
-                 if( isProtected( $req, $code ) ) {
-                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
-                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
-                 } else {
-                     echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
-                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notprotected ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notprotected~~~~\n\n", $rfppdata );
-                 }
-                 checkComments( $req, false, $code );
-                 continue;
+            else {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
+                $pendingrequests++;
+                if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) );  
+                    continue;    
+                }
+                if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (prot)\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) );  
+                    continue;   
+                }
+                if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (prot)\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) );  
+                    continue;    
+                }
+                checkComments( $req, false, false, getRequester( $req ) );  
             }
-            if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "do", "done" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit( $req )." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
-                $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            $pendingrequests++;
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
-            if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-            checkComments( $req, false, $code );
-        }
-        else {
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
-            $pendingrequests++;
-            if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false );  
-                continue;    
-            }
-            if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (prot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false );  
-                continue;   
-            }
-            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (prot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false );  
-                continue;    
-            }
-            checkComments( $req, false, false );  
+        } else {
+            if( !checkComments( $req, str_replace( "{user}", getRequester($req), $unreadable ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester($req), $unreadable )."~~~~\n\n", $rfppdata );
         }
     }
     preg_match_all( '/(==?==.*?==?==.*?)(?===|$)/si', $unprotectionrequests, $requestsalpha );
     foreach( $requestsalpha[0] as $req ) {
-        if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
-            preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
-            $code = strtolower( $code[1] );
-            if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
-                $pendingrequests++;
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
-                 if( isProtected( $req, $code ) ) {
-                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
-                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
-                 } else {
-                     echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
-                     if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notprotected ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notprotected~~~~\n\n", $rfppdata );
-                 }
-                 checkComments( $req, false, $code );
-                 continue;
-            }
-            if( in_array( $code, array( "u", "unpr", "au", "isun", "ad", "isdo" ) ) ) {
-                if( isUnprotected( $req ) ) {
-                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit." minutes ago\n";
-                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
-                }  else {
-                    if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, $notunprotected ) ) {
-                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as unprotected, but not unprotected\n";
-                        $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$notunprotected~~~~\n\n" );
+        if( normalize( $req ) && !checkComments( $req, str_replace( "{user}", getRequester( $req ), $normalized ) ) ) {
+            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester( $req ), $normalized )."~~~~\n\n", $rfppdata );
+        }
+        if( getFullPageTitle( $req ) !== false ) {
+            if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
+                preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
+                $code = strtolower( $code[1] );
+                if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
+                    $pendingrequests++;
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "s", "semi", "pd", "pend", "p", "f", "full", "m", "move", "t", "salt", "fb", "feedback", "feed", "ap", "ispr", "ad", "isdo", "temp", "tp", "pc", "pc1", "pc2" ) ) ) {
+                     if( isProtected( $req, $code ) ) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
+                        if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
+                     } else {
+                         echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
+                         if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, str_replace( "{user}", getRequestHandler($req), $notprotected ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notprotected )."~~~~\n\n", $rfppdata );
+                     }
+                     checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                     continue;
+                }
+                if( in_array( $code, array( "u", "unpr", "au", "isun", "ad", "isdo" ) ) ) {
+                    if( isUnprotected( $req ) ) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit." minutes ago\n";
+                        if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
+                    }  else {
+                        if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, str_replace( "{user}", getRequestHandler($req), $notunprotected ) ) ) {
+                            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as unprotected, but not unprotected\n";
+                            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notunprotected )."~~~~\n\n" );
+                        }
+                        checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                        continue;
                     }
-                    checkComments( $req, false, $code );
+                }
+                if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
                     continue;
                 }
-            }
-            if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "do", "done" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
-                $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            $pendingrequests++;
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
-            if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-            checkComments( $req, false, $code );
-        } else {
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
-            $pendingrequests++;
-            if( preg_match_all( '/\'\'\'(.*?)\'\'\'/i', $req, $protstrs ) ) {
-                foreach( $protstrs[1] as $protstr) {
-                    $protstr = strtolower( $protstr );
-                    if( strpos( $protstr, "{{" ) === false ) break;
-                }                                        
-            }
-            else $protstr = "";
-            if( strpos( $protstr, "unprotect" ) !== false ) {
-                if( isAlreadyUnprotected( $req ) && !checkComments( $req, $alreadyunprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER) {
-                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already unprotected\n";
-                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyunprotected~~~~\n\n", $rfppdata );   
-                    checkComments( $req, false, false );  
+                if( in_array( $code, array( "do", "done" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
                     continue;
                 }
+                if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                    $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                $pendingrequests++;
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+                if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
             } else {
-                if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
-                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
-                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
-                    checkComments( $req, false, false );
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
+                $pendingrequests++;
+                if( preg_match_all( '/\'\'\'(.*?)\'\'\'/i', $req, $protstrs ) ) {
+                    foreach( $protstrs[1] as $protstr) {
+                        $protstr = strtolower( $protstr );
+                        if( strpos( $protstr, "{{" ) === false ) break;
+                    }                                        
+                }
+                else $protstr = "";
+                if( strpos( $protstr, "unprotect" ) !== false ) {
+                    if( isAlreadyUnprotected( $req ) && !checkComments( $req, $alreadyunprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already unprotected\n";
+                        $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyunprotected~~~~\n\n", $rfppdata );   
+                        checkComments( $req, false, false, getRequester( $req ) );  
+                        continue;
+                    }
+                } else {
+                    if( isAlreadyProtected( $req ) && !checkComments( $req, $alreadyprotected ) && getProtectTime( $req ) > $PROTECT_BUFFER ) {
+                        echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, page is already protected\n";
+                        $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadyprotected~~~~\n\n", $rfppdata );
+                        checkComments( $req, false, false, getRequester( $req ) );
+                        continue;    
+                    }
+                }
+                if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (unprot)\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) );
+                    continue;   
+                }
+                if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) );
                     continue;    
                 }
+                checkComments( $req, false, false, getRequester( $req ) ); 
             }
-            if( isRecentlyDenied( $req, $archivedata ) && !checkComments( $req, $alreadydenied ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, another request was recently denied (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$alreadydenied~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false );
-                continue;   
-            }
-            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false );
-                continue;    
-            }
-            checkComments( $req, false, false ); 
-        }
+        } else {
+            if( !checkComments( $req, str_replace( "{user}", getRequester($req), $unreadable ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester($req), $unreadable )."~~~~\n\n", $rfppdata );
+        }    
     }
     preg_match_all( '/(==?==.*?=?===.*?)(?===|$)/si', $editrequests, $requestsalpha );
     foreach( $requestsalpha[0] as $req ) {
-        if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
-            preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
-            $code = strtolower( $code[1] );
-            if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
+        if( normalize( $req ) && !checkComments( $req, str_replace( "{user}", getRequester( $req ), $normalized ) ) ) {
+            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester( $req ), $normalized )."~~~~\n\n", $rfppdata );
+        }
+        if( getFullPageTitle( $req ) !== false ) {
+            if( strpos( strtolower( $req ), "{{rfpp" ) !== false ) {
+                preg_match( '/\{\{RFPP\s*\|\s*(.*?)\s*(?:\||\}\})/i', substr( $req, strrpos( strtolower( $req ), "{{rfpp" ) ), $code );
+                $code = strtolower( $code[1] );
+                if( in_array( $code, array( "ch", "chck", "q", "ques", "n", "note" ) ) ) {
+                    $pendingrequests++;
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "do", "done" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
+                    if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
+                if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
+                    $tobearchived[] = trim( $req, "\n" )."\n\n";
+                    checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+                    continue;
+                }
                 $pendingrequests++;
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Discussion ongoing, not actioned yet\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_TIMEOUT ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "w", "aiv", "d", "deny", "nea", "nact", "np", "npre", "nhr", "nhrt", "dr", "disp", "ut", "usta", "b", "bloc", "tb", "tabl", "notd", "no", "rate", "her" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Declined ".timeSinceLastEdit( $req )." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_DENIED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "do", "done" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as done ".timeSinceLastEdit()." minutes ago\n";
-                if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            if( in_array( $code, array( "ar", "arch", "archive" ) ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Immediate archiving requested ".timeSinceLastEdit( $req )." minutes ago\n";
-                $tobearchived[] = trim( $req, "\n" )."\n\n";
-                checkComments( $req, false, $code );
-                continue;
-            }
-            $pendingrequests++;
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
-            if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
-            checkComments( $req, false, $code );
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled, template parameter unparseable, last edit ".timeSinceLastEdit($req)." minutes ago\n";
+                if( timeSinceLastEdit( $req ) > $ARCHIVE_CONFUSED ) $tobearchived[] = trim( $req, "\n" )."\n\n";
+                checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
+            } else {
+                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
+                $pendingrequests++;
+                if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
+                    echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
+                    $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
+                    checkComments( $req, false, false, getRequester( $req ) ); 
+                    continue;    
+                }
+                checkComments( $req, false, false, getRequester( $req ) ); 
+            }    
         } else {
-            echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": No response yet\n";
-            $pendingrequests++;
-            if( isRequesterBlocked( $req ) && !checkComments( $req, $requesterblocked ) ) {
-                echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Not handled, requester is blocked (unprot)\n";
-                $rfppdata = str_replace( $req, trim( $req, "\n" )."\n$requesterblocked~~~~\n\n", $rfppdata );
-                checkComments( $req, false, false ); 
-                continue;    
-            }
-            checkComments( $req, false, false ); 
-        }    
+            if( !checkComments( $req, str_replace( "{user}", getRequester($req), $unreadable ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequester($req), $unreadable )."~~~~\n\n", $rfppdata );
+        }     
     }
     echo $pendingrequests." pending requests.\n";
     if( $pendingrequests >= $BACKLOG_ADD_LIMIT ) {
@@ -392,7 +415,7 @@ function isAlreadyUnprotected( $req ) {
         }
         return false;
     }
-    if( $pagename == "" ) return false;
+    if( $pagename == "" || $pagename === false ) return false;
     $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
@@ -442,7 +465,7 @@ function isUnprotected( $req ) {
         }
         return true;
     }
-    if( $pagename = "" ) return true;
+    if( $pagename = "" || $pagename === false ) return true;
     $page = $site->initPage( $pagename, null, false );
     $logs = $site->logs( "protect", false, $pagename );
     if( !$page->get_exists() ) return true;
@@ -461,6 +484,25 @@ function isRequesterBlocked( $req ) {
     else return false;
     $blocked = $site->initUser( $requester )->is_blocked();
     return $blocked;
+}
+
+function getRequester( $req ) {
+    global $site;
+    $endloc = strpos( $req, "(UTC)" );
+    if( $endloc === false ) return false;
+    $startloc = strrpos(strtolower( $req ), "[[user", $endloc-strlen( $req ) );
+    preg_match( '/\[\[User(?: talk)?:(.*?)(?:\||\]\])/i', substr( $req, $startloc, $endloc-$startloc ), $requester );
+    if( isset( $requester[1] ) ) $requester = trim( $requester[1] );
+    else return false;
+    return $requester;
+}
+
+function getRequestHandler( $req ) {
+    $startloc = strrpos( strtolower( $req ), "{{rfpp" );
+    preg_match( '/\[\[User(?: talk)?:(.*?)(?:\||\]\])/i', substr( $req, $startloc ), $handler );
+    if( isset( $handler[1] ) ) $handler = trim( $handler[1] );
+    else return false;
+    return $handler;
 }
 
 function isRecentlyDenied( $req, $archivedata ) {
@@ -489,6 +531,7 @@ function getProtectTime( $pagetitle ) {
         }
         return round( $dt/60.0, 0 );    
     }
+    if( $pagename = "" || $pagename === false ) return 0;
     $logs = $site->logs( "protect", false, $pagename );
     if( isset( $logs[0]['timestamp'] ) ) $lastprotectaction = strtotime( $logs[0]['timestamp'] );
     $logs = $site->logs( "stable", false, $pagename );
@@ -546,7 +589,7 @@ function isAlreadyProtected( $req ) {
         }
         return false; 
     }
-    if( $pagename == "" ) return false;
+    if( $pagename == "" || $pagename === false ) return false;
     $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
@@ -611,6 +654,11 @@ function timeSinceLastEdit( $req ) {
     return round( (time() - max( $dts ))/60.0, 0 );
 }
 
+function getRequestTimeUnix( $req ) {
+    if( preg_match( '/\d{2}:\d{2}, \d{1,2} (?:January|February|March|April|May|June|July|August|September|October|November|December) \d{4} \(UTC\)/i', $req, $edittimes ) ) return strtotime( $edittimes[0] );
+    else return 0;
+}
+
 function isProtected( $req, $code ) {
     global $site;
     $pagename = getFullPageTitle( $req );
@@ -625,7 +673,7 @@ function isProtected( $req, $code ) {
                         if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) $t = true;
                     }
                 }
-                if( in_array( $code, array( "p", "full" ) ) ) {
+                if( in_array( $code, array( "p", "full", "f" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) $t = true;
                     }
@@ -657,7 +705,7 @@ function isProtected( $req, $code ) {
         }
         return true;
     }
-    if( $pagename == "" ) return true;
+    if( $pagename == "" || $pagename === false ) return true;
     $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
@@ -667,7 +715,7 @@ function isProtected( $req, $code ) {
             }
             return false;
         }
-        if( in_array( $code, array( "p", "full" ) ) ) {
+        if( in_array( $code, array( "p", "full", "f" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) return true;
             }
@@ -709,18 +757,33 @@ function normalize( &$req ) {
     return false; 
 }
 
-function checkComments( &$req, $searchValue = false, $code = "" ) {
-    global $rfppdata, $notprotected, $notunprotected, $requesterblocked;
+function sortSection( &$section ) {
+    preg_match_all( '/(===?=.*?===?=.*?)(?===|$)/si', $section, $requestsalpha );
+    $new_array = array();
+    foreach( $requestsalpha[0] as $req ) {
+        $new_array[getRequestTimeUnix( $req )] = trim($req);  
+    }
+    ksort( $new_array );
+    $section = preg_replace( '/(===?=.*?===?=.*?)(?===|$)/si', "", $section );
+    $section = trim( $section );
+    $section .= "\n\n".implode( "\n\n", $new_array );
+    return $section;
+}
+
+function checkComments( &$req, $searchValue = false, $code = "", $requester = false, $handler = false ) {
+    global $rfppdata, $notprotected, $notunprotected, $requesterblocked, $unreadable;
+    if( $handler === false ) $handler = "";
     if( $searchValue === false ) {
-        $req2 = $req;
-        if( strpos( $req, $notprotected ) !== false && strpos( $req, "<s>".str_replace( "*","",$notprotected)."</s>" ) === false ) {
+        $req2 = $req;  
+        $req2 = str_replace( str_replace( "{user}", $requester, $unreadable ), "<s>".str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) )."</s>", $req );
+        if( strpos( $req, str_replace( "{user}", $handler, $notprotected ) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>" ) === false ) {
             if( isProtected( $req, $code ) ) {
-                $req2 = str_replace( $notprotected, "<s>".str_replace( "*","",$notprotected)."</s>", $req );   
+                $req2 = str_replace( str_replace( "{user}", $handler, $notprotected ), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>", $req );   
             } 
         }
-        if( strpos( $req, $notunprotected ) !== false && strpos( $req, "<s>".str_replace( "*","",$notunprotected)."</s>" ) === false ) {
+        if( strpos( $req, str_replace( "{user}", $handler, $notunprotected ) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>" ) === false ) {
             if( isUnprotected( $req ) ) {
-                $req2 = str_replace( $notunprotected, "<s>".str_replace( "*","",$notunprotected)."</s>", $req );   
+                $req2 = str_replace( str_replace( "{user}", $handler, $notunprotected ), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>", $req );   
             } 
         }
         if( strpos( $req, $requesterblocked ) !== false && strpos( $req, "<s>".str_replace( "*","",$requesterblocked)."</s>" ) === false ) {
@@ -790,6 +853,7 @@ function getFullPageTitle( $req ) {
         }
         return $returnArray;    
     }
+    if( count( $header[0] ) == 0 ) return false;
     $template = trim( $header[1][0] );
     $pagename = trim( $header[2][0] );
     $namespace = "";

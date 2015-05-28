@@ -170,13 +170,13 @@ while( true ) {
                      if( isProtected( $req, $code ) ) {
                         echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit( $req )." minutes ago\n";
                         if( timeSinceLastEdit( $req ) > $ARCHIVE_FULFILLED ) $tobearchived[] = trim( $req, "\n" )."\n\n";   
+                        continue;
                      } else {
                          echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as protected, but not protected\n";
                          if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, str_replace( "{user}", getRequestHandler($req), $notprotected ) ) ) $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notprotected )."~~~~\n\n", $rfppdata );
                      }
                      checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
-                     continue;
-                }
+                }    
                 if( in_array( $code, array( "u", "unpr", "au", "isun", "ad", "isdo" ) ) ) {
                     if( isUnprotected( $req ) ) {
                         echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Handled ".timeSinceLastEdit." minutes ago\n";
@@ -465,7 +465,7 @@ function isUnprotected( $req ) {
         }
         return true;
     }
-    if( $pagename = "" || $pagename === false ) return true;
+    if( $pagename == "" || $pagename === false ) return true;
     $page = $site->initPage( $pagename, null, false );
     $logs = $site->logs( "protect", false, $pagename );
     if( !$page->get_exists() ) return true;
@@ -668,34 +668,34 @@ function isProtected( $req, $code ) {
             if( $page->get_exists() ) {
                 $protection = $page->get_protection();
                 $t = false;
-                if( in_array( $code, array( "s", "semi" ) ) ) {
+                if( in_array( $code, array( "s", "semi", "ap", "ad", "ispr", "isdo" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) $t = true;
                     }
                 }
-                if( in_array( $code, array( "p", "full", "f" ) ) ) {
+                if( in_array( $code, array( "p", "full", "f", "ap", "ad", "ispr", "isdo" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) $t = true;
                     }
                 }
-                if( in_array( $code, array( "tp", "temp" ) ) ) {
+                if( in_array( $code, array( "tp", "temp", "ap", "ad", "ispr", "isdo" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'edit' && $p['level'] == 'templateeditor' ) $t = true;
                     }
                 }
-                if( in_array( $code, array( "m", "move" ) ) ) {
+                if( in_array( $code, array( "m", "move", "ap", "ad", "ispr", "isdo" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'move' ) $t = true;
                     }
                 }
-                if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2" ) ) ) {
+                if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2", "ap", "ad", "ispr", "isdo" ) ) ) {
                     $t = isPCprotected( $tpage );
                 }
                 if( $t == false ) return false;
             } else {
                 $t = false;
                 $protection = $page->get_protection();
-                if( in_array( $code, array( "t", "salt" ) ) ) {
+                if( in_array( $code, array( "t", "salt", "ap", "ad", "ispr", "isdo" ) ) ) {
                     foreach( $protection as $p ) {
                         if( $p['type'] == 'create' ) $t = true;
                     }
@@ -703,49 +703,49 @@ function isProtected( $req, $code ) {
                 if( $t == false ) return false;
             }
         }
-        return true;
+        return false;
     }
     if( $pagename == "" || $pagename === false ) return true;
     $page = $site->initPage( $pagename, null, false );
     if( $page->get_exists() ) {
         $protection = $page->get_protection();
-        if( in_array( $code, array( "s", "semi" ) ) ) {
+        if( in_array( $code, array( "s", "semi", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) return true;
             }
             return false;
         }
-        if( in_array( $code, array( "p", "full", "f" ) ) ) {
+        if( in_array( $code, array( "p", "full", "f", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) return true;
             }
             return false;
         }
-        if( in_array( $code, array( "tp", "temp" ) ) ) {
+        if( in_array( $code, array( "tp", "temp", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'templateeditor' ) return true;
             }
             return false;
         }
-        if( in_array( $code, array( "m", "move" ) ) ) {
+        if( in_array( $code, array( "m", "move", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'move' ) return true;
             }
             return false;
         }
-        if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2" ) ) ) {
+        if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2", "ap", "ad", "ispr", "isdo" ) ) ) {
             return isPCprotected( $pagename );
         }
     } else {
         $protection = $page->get_protection();
-        if( in_array( $code, array( "t", "salt" ) ) ) {
+        if( in_array( $code, array( "t", "salt", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'create' ) return true;
             }
             return false;
         }
     }
-    return true;
+    return false;
 }
 
 function normalize( &$req ) {

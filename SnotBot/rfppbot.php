@@ -703,7 +703,7 @@ function isProtected( $req, $code ) {
                 if( $t == false ) return false;
             }
         }
-        return false;
+        return true;
     }
     if( $pagename == "" || $pagename === false ) return true;
     $page = $site->initPage( $pagename, null, false );

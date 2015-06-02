@@ -184,7 +184,7 @@ while( true ) {
                     }  else {
                         if( timeSinceLastEdit( $req ) > $PROTECT_BUFFER && !checkComments( $req, str_replace( "{user}", getRequestHandler($req), $notunprotected ) ) ) {
                             echo ( is_array( getFullPageTitle( $req ) ) ? implode(",", getFullPageTitle( $req )) : getFullPageTitle( $req ) ).": Marked as unprotected, but not unprotected\n";
-                            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notunprotected )."~~~~\n\n" );
+                            $rfppdata = str_replace( $req, trim( $req, "\n" )."\n".str_replace( "{user}", getRequestHandler($req), $notunprotected )."~~~~\n\n", $rfppdata );
                         }
                         checkComments( $req, false, $code, getRequester( $req ), getRequestHandler( $req ) );
                         continue;
@@ -506,7 +506,7 @@ function getRequestHandler( $req ) {
 }
 
 function isRecentlyDenied( $req, $archivedata ) {
-    preg_match( '/(\{\{[l|p]\w+\|.*?\}\})/i', $req, $header );
+    preg_match( '/(\{\{(page|l)\w+\|.*?\}\})/i', $req, $header );
     if( strpos( $archivedata, $header[1] ) !== false ) {
         $start = strpos( $archivedata, $header[1] );
         $end = strpos( substr( $archivedata, $start ), "\n==" );
@@ -761,7 +761,8 @@ function sortSection( &$section ) {
     preg_match_all( '/(===?=.*?===?=.*?)(?===|$)/si', $section, $requestsalpha );
     $new_array = array();
     foreach( $requestsalpha[0] as $req ) {
-        $new_array[getRequestTimeUnix( $req )] = trim($req);  
+        if( !isset( $new_array[getRequestTimeUnix( $req )] ) ) $new_array[getRequestTimeUnix( $req )] = trim($req);  
+        else $new_array[getRequestTimeUnix( $req )] .= "\n\n".trim($req);
     }
     ksort( $new_array );
     $section = preg_replace( '/(===?=.*?===?=.*?)(?===|$)/si', "", $section );
@@ -775,15 +776,15 @@ function checkComments( &$req, $searchValue = false, $code = "", $requester = fa
     if( $handler === false ) $handler = "";
     if( $searchValue === false ) {
         $req2 = $req;  
-        $req2 = str_replace( str_replace( "{user}", $requester, $unreadable ), "<s>".str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) )."</s>", $req );
-        if( strpos( $req, str_replace( "{user}", $handler, $notprotected ) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>" ) === false ) {
+        $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) ), "<s>".str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) )."</s>", $req );
+        if( strpos( $req, str_replace( "*","",str_replace( "{user}", $handler, $notprotected )) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>" ) === false ) {
             if( isProtected( $req, $code ) ) {
-                $req2 = str_replace( str_replace( "{user}", $handler, $notprotected ), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>", $req );   
+                $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $handler, $notprotected )), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>", $req );   
             } 
         }
-        if( strpos( $req, str_replace( "{user}", $handler, $notunprotected ) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>" ) === false ) {
+        if( strpos( $req, str_replace( "*","",str_replace( "{user}", $handler, $notunprotected )) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>" ) === false ) {
             if( isUnprotected( $req ) ) {
-                $req2 = str_replace( str_replace( "{user}", $handler, $notunprotected ), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>", $req );   
+                $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $handler, $notunprotected )), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notunprotected ))."</s>", $req );   
             } 
         }
         if( strpos( $req, $requesterblocked ) !== false && strpos( $req, "<s>".str_replace( "*","",$requesterblocked)."</s>" ) === false ) {
@@ -802,12 +803,12 @@ function checkComments( &$req, $searchValue = false, $code = "", $requester = fa
 }
 
 function getFullPageTitle( $req ) {
-    preg_match_all( '/\{\{([l|p]\w+)\|(.*?)\}\}/i', $req, $header );
+    preg_match_all( '/\{\{((page|l)\w+)\|(.*?)\}\}/i', $req, $header );
     if( count($header[0]) > 1 ) {
         $returnArray = array();
         foreach( $header[0] as $t=>$p ) {
             $template = trim( $header[1][$t] );
-            $pagename = trim( $header[2][$t] );
+            $pagename = trim( $header[3][$t] );
             $namespace = "";
             if( $template == "lat" ) $namespace = "Talk:";
             elseif( $template == "ld" ) $namespace = "Draft:";
@@ -855,7 +856,7 @@ function getFullPageTitle( $req ) {
     }
     if( count( $header[0] ) == 0 ) return false;
     $template = trim( $header[1][0] );
-    $pagename = trim( $header[2][0] );
+    $pagename = trim( $header[3][0] );
     $namespace = "";
     if( $template == "lat" ) $namespace = "Talk:";
     elseif( $template == "ld" ) $namespace = "Draft:";

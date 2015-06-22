@@ -27,7 +27,7 @@ class wikibot {
 		$this->ch   = curl_init();
 		$this->user   = "";
 		$this->fileid = rand(1,1000);
-		$this->api  = "http://en.wikipedia.org/w/api.php";
+		$this->api  = "https://en.wikipedia.org/w/api.php";
 		curl_setopt($this->ch,CURLOPT_USERAGENT,'wAPI/1.1.1 (Bot: Cyberbot I Operator: Cyberpower678)');
 		curl_setopt($this->ch,CURLOPT_COOKIEFILE,'curl/wp.bot-'.$this->fileid.'.cookie');
 		curl_setopt($this->ch,CURLOPT_COOKIEJAR,'curl/wp.bot-'.$this->fileid.'.cookie');
@@ -78,7 +78,7 @@ class wikibot {
 	function post($to, $array, $format = 'php') {
 		$fields = $array;
 		$reqtime = microtime(1);
-		$to = $to.'?format='.$format.'&assert=user';
+		$to = $to.'?format='.$format;
 		curl_setopt($this->ch,CURLOPT_URL,$to);
 		curl_setopt($this->ch,CURLOPT_TIMEOUT,120);
 		curl_setopt($this->ch,CURLOPT_CONNECTTIMEOUT,30);
@@ -214,7 +214,7 @@ class wikibot {
 				return FALSE;
 			}
 		}
-		curl_setopt($this->ch,CURLOPT_USERAGENT,'wAPI/1.1 (Bot: '.$user.' Operator: Noommos Contact: josh@makaiwell.com )');
+		curl_setopt($this->ch,CURLOPT_USERAGENT,'wAPI/1.1 (Bot: '.$user.' Operator: Cyberpower678 Contact: English Wikipedia Email )');
 	}
 
 	private function setLastError($errordetails) {
@@ -268,7 +268,7 @@ class wikibot {
 	}
 
 	function edit($page, $content, $summary, $section = NULL, $minor = 0, $bot = 1, $noEC = 0, $recreate = 0, $createonly = 0, $nocreate = 0) {
-		$params = array('token' => '', 'action' => 'edit', 'title' => str_replace(' ', '_', $page), 'text' => $content, 'summary' => $summary, 
+		$params = array('token' => '', 'action' => 'edit', 'assert' => 'user', 'title' => str_replace(' ', '_', $page), 'text' => $content, 'summary' => $summary, 
 ($section?'section':'nosection') => ($section?$section:''), ($minor == 1?'minor':'notminor') => 1, ($bot == 1?'bot':'nobot') => 1, ($recreate == 1?'recreate':'norecreate') => 1, ($createonly == 1?'createonly':'nocreateonly') => 1, ($nocreate == 1?'nocreate':'nonocreate') => 1);
 
 		if ($noEC == 1) {

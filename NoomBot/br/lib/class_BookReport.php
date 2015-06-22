@@ -64,7 +64,7 @@ class BookReport {
 		$this->scoring = array('FA' => 10, 'FL' => 10, 'A' => 9, 'GA' => 8, 'B+' => 7, 'B' => 7, 'C' => 5, 'START' => 3, 'STUB' => 1, 'LIST' => 0, '' => 0, 'UNASSESSED' => -1, 'OTHER' => -1, 'NA' => -1, '???' => -1);
 
 		$sql = "USE `cyberbot`;";
-		mysql_query($sql, $this->db);
+		mysqli_query($this->db, $sql);
 	}
 
 	public function getVersion() { return BookReports::version; }
@@ -383,28 +383,28 @@ class BookReport {
 	}
 
 	private function getLast() {
-		$escaped = mysql_real_escape_string($this->book);
+		$escaped = mysqli_real_escape_string($this->db, $this->book);
 		$sql = "SELECT * FROM `bookreports` WHERE `book`='".$escaped."' LIMIT 1;";
-		$r = mysql_query($sql, $this->db);
-		if (mysql_num_rows($r) === 0) {
+		$r = mysqli_query($this->db, $sql);
+		if (mysqli_num_rows($r) === 0) {
 			$sql = "INSERT INTO `bookreports` (`book`) VALUES ('".$escaped."');";
-			$sql = mysql_query($sql);
+			$sql = mysqli_query($this->db, $sql);
 			if ($sql === FALSE) {
-				out("MySQL error when attempting to INSERT into the cache: ".mysql_error(), 1);
+				out("MySQL error when attempting to INSERT into the cache: ".mysqli_error($this->db), 1);
 			}
 			$r = array('time' => 0);
-			$this->id = mysql_insert_id();
+			$this->id = mysqli_insert_id($this->db);
 			if ($this->id === 0 || $this->id === false) {
 				$sql = "SELECT LAST_INSERT_ID();";
-				$id = mysql_fetch_array(mysql_query($sql));
+				$id = mysqli_fetch_array(mysql_query($this->db, $sql));
 				$this->id = $id['LAST_INSERT_ID()'];
 			}
 		}
 		else if ($r === FALSE) {
-			out("MySQL error when attempting to SELECT from the cache: ".mysql_error(), 1);
+			out("MySQL error when attempting to SELECT from the cache: ".mysqli_error($this->db), 1);
 		}
 		else {
-			$r = mysql_fetch_array($r);
+			$r = mysqli_fetch_array($r);
 			if ($r === false || $r === 0) {
 				out("MySQL error when attempting to get the last insert id: ".var_dump($r, true), 1);
 			}
@@ -540,9 +540,9 @@ class BookReport {
 			}
 
 			$sql = "UPDATE `bookreports` SET `avg`='".$this->summary['avg']."', `time`=".time().", `unassess`='".$this->summary['unassessed']."', `md5hash`='', `art`=".$this->summary['articles'].", `probart`=".$this->summary['cleanup']." WHERE `id`=".$this->id.";";
-			$r = mysql_query($sql);
+			$r = mysqli_query($this->db, $sql);
 			if ($r == false) {
-				out("MySQL error when attempting to UPDATE the cache: ".mysql_error(), 1);
+				out("MySQL error when attempting to UPDATE the cache: ".mysql_error($this->db), 1);
 			}
 		}
 		else {

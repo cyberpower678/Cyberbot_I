@@ -689,7 +689,7 @@ function isProtected( $req, $code ) {
                     }
                 }
                 if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2", "ap", "ad", "ispr", "isdo" ) ) ) {
-                    $t = isPCprotected( $tpage );
+                    if( isPCprotected( $tpage ) ) $t = true;
                 }
                 if( $t == false ) return false;
             } else {
@@ -713,25 +713,21 @@ function isProtected( $req, $code ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'autoconfirmed' ) return true;
             }
-            return false;
         }
         if( in_array( $code, array( "p", "full", "f", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'sysop' ) return true;
             }
-            return false;
         }
         if( in_array( $code, array( "tp", "temp", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'edit' && $p['level'] == 'templateeditor' ) return true;
             }
-            return false;
         }
         if( in_array( $code, array( "m", "move", "ap", "ad", "ispr", "isdo" ) ) ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'move' ) return true;
             }
-            return false;
         }
         if( in_array( $code, array( "pd", "pend", "pc", "pc1", "pc2", "ap", "ad", "ispr", "isdo" ) ) ) {
             return isPCprotected( $pagename );
@@ -742,7 +738,6 @@ function isProtected( $req, $code ) {
             foreach( $protection as $p ) {
                 if( $p['type'] == 'create' ) return true;
             }
-            return false;
         }
     }
     return false;
@@ -750,7 +745,7 @@ function isProtected( $req, $code ) {
 
 function normalize( &$req ) {
     global $rfppdata;
-    if( preg_match( '/====\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*====/i', $req, $header ) ) {
+    if( preg_match( '/====?\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*=?===/i', $req, $header ) ) {
         $rfppdata = str_replace( $req, $req = preg_replace( '/====\s*\{\{([l|p]\w+)\|(.*?)\}\}\s*====/i', "=== [[".getFullPageTitle( $req )."]] ===\n*{{".trim( $header[1] )."|".trim( $header[2] )."}}\n\n", $req ), $rfppdata );
         return true;
     }  
@@ -776,7 +771,8 @@ function checkComments( &$req, $searchValue = false, $code = "", $requester = fa
     if( $handler === false ) $handler = "";
     if( $searchValue === false ) {
         $req2 = $req;  
-        $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) ), "<s>".str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) )."</s>", $req );
+        if( strpos( $req, str_replace( "*","",str_replace( "{user}", $handler, $unreadable )) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $unreadable ))."</s>" ) === false ) 
+            $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) ), "<s>".str_replace( "*","",str_replace( "{user}", $requester, $unreadable ) )."</s>", $req );
         if( strpos( $req, str_replace( "*","",str_replace( "{user}", $handler, $notprotected )) ) !== false && strpos( $req, "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>" ) === false ) {
             if( isProtected( $req, $code ) ) {
                 $req2 = str_replace( str_replace( "*","",str_replace( "{user}", $handler, $notprotected )), "<s>".str_replace( "*","",str_replace( "{user}", $handler, $notprotected ))."</s>", $req );   
@@ -803,12 +799,12 @@ function checkComments( &$req, $searchValue = false, $code = "", $requester = fa
 }
 
 function getFullPageTitle( $req ) {
-    preg_match_all( '/\{\{((page|l)\w+)\|(.*?)\}\}/i', $req, $header );
+    preg_match_all( '/\{\{((page|l)\w+)\|(1\=)?(.*?)\}\}/i', $req, $header );
     if( count($header[0]) > 1 ) {
         $returnArray = array();
         foreach( $header[0] as $t=>$p ) {
             $template = trim( $header[1][$t] );
-            $pagename = trim( $header[3][$t] );
+            $pagename = trim( $header[4][$t] );
             $namespace = "";
             if( $template == "lat" ) $namespace = "Talk:";
             elseif( $template == "ld" ) $namespace = "Draft:";
@@ -856,7 +852,7 @@ function getFullPageTitle( $req ) {
     }
     if( count( $header[0] ) == 0 ) return false;
     $template = trim( $header[1][0] );
-    $pagename = trim( $header[3][0] );
+    $pagename = trim( $header[4][0] );
     $namespace = "";
     if( $template == "lat" ) $namespace = "Talk:";
     elseif( $template == "ld" ) $namespace = "Draft:";
@@ -881,7 +877,7 @@ function getFullPageTitle( $req ) {
     elseif( $template == "lf" ) $namespace = "File:";
     elseif( $template == "lft" ) $namespace = "File talk:";
     elseif( $template == "lttxt" ) $namespace = "TimedTex:";
-    elseif( $template == "ltxtt" ) $namespace = "TimedText talk:";
+    elseif( $template == "ltxtt" ) $namespace = "TimedText talk:";                 
     elseif( $template == "lmd" ) $namespace = "Module:";
     elseif( $template == "lmdt" ) $namespace = "Module talk:";
     elseif( $template == "ln" ) {

@@ -231,7 +231,7 @@ class wikibot {
 		}
 		else {
 			$flags = $this->query('?action=query&list=users&ususers='.$user.'&usprop=groups');
-			if (!isset($flags['query']['users'][0]['groups'])) mail("josh1091@hotmail.co.uk", "[WIKIBOT] Warning", "Had a problem with groups for user ".$user.":".PHP_EOL.var_dump($flags, true));
+			if (!isset($flags['query']['users'][0]['groups'])) mail("maximilian.doerr@gmail.com", "[WIKIBOT] Warning", "Had a problem with groups for user ".$user.":".PHP_EOL.var_dump($flags, true));
 			return $flags['query']['users'][0]['groups'];
 		}
 	}
@@ -285,7 +285,7 @@ class wikibot {
 	}
 
 	function getPage($page, $name = '') {
-		$api = $this->query('?action=query&prop=revisions&titles='.$this->sanitize($page).'&rvprop=content&rvlimit=1', FALSE, $name);
+		$api = $this->query('?action=query&prop=revisions&rawcontinue=1&titles='.$this->sanitize($page).'&rvprop=content&rvlimit=1', FALSE, $name);
 		if ($api === WAPI_DEFFERED) { return; }
 		else {
 			foreach($api['query']['pages'] as $page) {
@@ -325,7 +325,7 @@ class wikibot {
 		$r = array();
 		
 		while($c) {
-			$params = array('action' => 'query', 'prop' => 'revisions', 'titles' => $this->paramJoin(array_splice($list, $offset, $limit)), 'rvprop' => 'content', 'rvlimit' => 1);
+			$params = array('action' => 'query', 'rawcontinue' => 1, 'prop' => 'revisions', 'titles' => $this->paramJoin(array_splice($list, $offset, $limit)), 'rvprop' => 'content', 'rvlimit' => 1);
 			$xu = $this->query($params, true);
 			$x = array();
 			foreach ($xu['query']['pages'] as $id => $page) {
@@ -347,7 +347,7 @@ class wikibot {
 	function getPageCached($page, $name = '') {
 		if (isset($this->cache[$page])) return $this->cache[$page];
 		else {
-			$api = $this->query('?action=query&prop=revisions&titles='.$page.'&rvprop=content&rvlimit=1', FALSE, $name);
+			$api = $this->query('?action=query&rawcontinue=1&prop=revisions&titles='.$page.'&rvprop=content&rvlimit=1', FALSE, $name);
 			if ($api === WAPI_DEFFERED) { return; }
 			else {
 				foreach($api['query']['pages'] as $page) {
@@ -387,7 +387,7 @@ class wikibot {
 		$continue = '';
 		$pages = array();
 		while (true) {
-			$res = $this->query('?action=query&list=categorymembers&cmtitle='.$this->sanitize($category).'&cmlimit='.$this->getpagelimit().$continue);
+			$res = $this->query('?action=query&list=categorymembers&rawcontinue=1&cmtitle='.$this->sanitize($category).'&cmlimit='.$this->getpagelimit().$continue);
 			if (isset($x['error'])) {
 				return false;
 			}
@@ -457,7 +457,7 @@ class wikibot {
 		$continue = '';
 		$pages = array();
 		while (true) {
-			$res = $this->query('?action=query&list=backlinks&bltitle='.$this->sanitize($page).'&bllimit=500&format=php'.$continue.$extra);
+			$res = $this->query('?action=query&rawcontinue=1&list=backlinks&bltitle='.$this->sanitize($page).'&bllimit=500&format=php'.$continue.$extra);
 			if (isset($res['error'])) {
 				return false;
 			}
@@ -476,7 +476,7 @@ class wikibot {
 		$continue = '';
 		$pages = array();
 		while (true) {
-			$res = $this->query('?action=query&list=embeddedin&eititle='.$page.'&eilimit='.$this->getpagelimit().$continue.$extra);
+			$res = $this->query('?action=query&rawcontinue=1&list=embeddedin&eititle='.$page.'&eilimit='.$this->getpagelimit().$continue.$extra);
 			if (isset($res['error'])) {
 				return false;
 			}
@@ -521,7 +521,7 @@ class wikibot {
 	}
 	
 	function exturlusage($extlink, $namespace = 0) {
-		$params = array('action' => 'query', 'list' => 'exturlusage', 'euquery' => $extlink, 'eunamespace' => $namespace, 'eulimit' => 5000, 'format' => 'php');
+		$params = array('action' => 'query', 'rawcontinue' => 1, 'list' => 'exturlusage', 'euquery' => $extlink, 'eunamespace' => $namespace, 'eulimit' => 5000, 'format' => 'php');
 		$continue = true;
 		$r = array();
 		while ($continue) {

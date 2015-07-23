@@ -30,7 +30,7 @@ error_reporting(E_ALL ^ E_NOTICE);
 class database {
     protected $dbLink;
     
-    public function __construct($host,$username,$password,$database,$port) {
+    public function __construct($host,$username,$password,$database,$port=3306) {
         $this->dbLink = mysqli_connect($host, $username, $password, $database, $port) or die('Error connecting to database');
     }
     
@@ -451,13 +451,13 @@ class chu {
 
 /* Connect to the database */
 
-$toolserver_mycnf = parse_ini_file('C:\Users\Maximilian Doerr\Documents\GitHub\Cyberbot_I/replica.my.cnf');
+$toolserver_mycnf = parse_ini_file('/data/project/cyberbot/replica.my.cnf');
 $toolserver_username = $toolserver_mycnf['user'];
 $toolserver_password = $toolserver_mycnf['password'];
 
-$db_enwiki = new database('127.0.0.1',$toolserver_username,$toolserver_password,'enwiki_p',8888);
-$db_central = new database('127.0.0.1',$toolserver_username,$toolserver_password,'centralauth_p',8889);
-require_once( 'C:\Users\Maximilian Doerr\Documents\NetBeansProjects\Peachy\Peachy/init.php' );
+$db_enwiki = new database('enwiki.labsdb',$toolserver_username,$toolserver_password,'enwiki_p');
+$db_central = new database('centralauth.labsdb',$toolserver_username,$toolserver_password,'centralauth_p');
+require_once( '/data/project/cyberbot/Peachy/Init.php' );
 
 $user = "Cyberbot I";
 $wiki = Peachy::newWiki( "soxbot" );
@@ -465,7 +465,7 @@ $wiki->set_runpage( "User:Cyberbot I/Run/CHUBot" );
 $metawiki = Peachy::newWiki( "meta" );
 $page = trim(strtolower($wiki->initPage("User:$user/clerk")->get_text(true)));
 if ($page=='true') {
-    $chu = new chu('User:Chris G/CHU',true);
+    $chu = new chu('Wikipedia:Changing username/Simple',true);
 } else {
     $chu = new chu('Wikipedia:Changing username/Simple',false);
 }

@@ -172,14 +172,14 @@ class chu {
             
                 /* Does $from exist? */
                 $ret = $db_enwiki->query('select user_name,user_editcount from user where user_name="'.$db_enwiki->escape(str_replace('_',' ',$from)).'";');
-                $x = mysql_fetch_assoc($ret);
+                $x = mysqli_fetch_assoc($ret);
                 if (str_replace('_',' ',$from) != $x['user_name']) {
                     $problems[] = "The username $from does not exist.";
                 }
             
                 /* Does $to already exist? */
                 $ret = $db_enwiki->query('select user_name,user_editcount from user where user_name="'.$db_enwiki->escape(str_replace('_',' ',$to)).'";');
-                $x = mysql_fetch_assoc($ret);
+                $x = mysqli_fetch_assoc($ret);
                 if (str_replace('_',' ',$to) == $x['user_name']) {
                     $url = '<span class="plainlinks">[https://en.wikipedia.org/w/index.php?title=Special:ListUsers&username='.urlencode($to).'&limit=1&offset=0 Special:Listusers]</span>';
                     if ($x['user_editcount'] > 0) {
@@ -191,7 +191,7 @@ class chu {
                 
                 /* Is $from currently blocked? */
                 $ret = $db_enwiki->query('select p1.ipb_id, p1.ipb_by_text, p1.ipb_reason from ipblocks as p1, user as p2 where p2.user_name = "'.$db_enwiki->escape(str_replace('_',' ',$form)).'" and p1.ipb_user = p2.user_id;');
-                $x = mysql_fetch_assoc($ret);
+                $x = mysqli_fetch_assoc($ret);
                 if (!empty($x['ipb_id'])) {
                     $problems[] = "$from is currently blocked by [[User:".$x['ipb_by_text']."|]] for \"".$x['ipb_reason']."\"";
                 }
@@ -207,7 +207,7 @@ class chu {
                 
                 /* Check for an sul account. */
                 
-                $sulapi = $wiki->apiQuery(array('action'=>'query', 'meta'=>'globaluserinfo', 'guiprop'=>'merged|unattached', 'uiuser'=>urlencode($to)));
+                $sulapi = $wiki->apiQuery(array('action'=>'query', 'meta'=>'globaluserinfo', 'guiprop'=>'merged|unattached', 'guiuser'=>urlencode($to)));
                 print_r($sulapi);
                 $url = "[[sulutil:{$to}|{$to}]]";
                 if (!empty($sulapi['query']['globaluserinfo']['merged'])) {
@@ -281,7 +281,7 @@ class chu {
         if (preg_match('/===\s*?<span id=\".+\">(.+?)<\/span>\s*?→\s*?(\S.+)\s*?===/i',$request,$m)) {
             $x = $wiki->apiQuery(array('action'=>'query', 'list'=>'logevents', 'letype'=>'renameuser', 'letitle'=>'User:'.$m[1], 'rawcontinue'=>1));
             if (isset($x['query']['logevents'][0]['user'])) {
-                if ($x['query']['logevents'][0]['newuser']==trim(ucfirst(str_replace('_',' ',$m[2]))) or preg_match('/'.preg_quote(trim(ucfirst(str_replace('_',' ',$m[2]))),'/').'/i',$x['query']['logevents'][0]['comment'])) {
+                if ($x['query']['logevents'][0]['params']['newuser']==trim(ucfirst(str_replace('_',' ',$m[2]))) or preg_match('/'.preg_quote(trim(ucfirst(str_replace('_',' ',$m[2]))),'/').'/i',$x['query']['logevents'][0]['comment'])) {
                     $tstamp = strtotime(str_replace(array('T','Z'),' ',$x['query']['logevents'][0]['timestamp']));
                     if ((time()-$tstamp) < 600) {
                         return $request;

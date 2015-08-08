@@ -118,7 +118,7 @@ class chu {
         global $db_enwiki, $db_central, $wiki;
         if (preg_match('/\{\{on\s?hold/i',$request) or preg_match('/\{\{CHU/i',$request)) 
             return $request;
-        if (preg_match('/\{\{c(lerk|rat)\s?note/i',$request) or preg_match('/Chris G Bot 3/i',$request) or preg_match('/Robot clerk note/i',$request))
+        if (preg_match('/\{\{c(lerk|rat)\s?note/i',$request) or preg_match('/Cyberbot I/i',$request) or preg_match('/Robot clerk note/i',$request))
             return $request;
         if (preg_match('/\{\{(not\s?|already\s?)?done\}\}/i',$request))
             return $request;
@@ -353,8 +353,12 @@ class chu {
     }
     
     protected function getcrats () {
-        global $wiki, $user;
-        $x = $wiki->apiQuery(array('action'=>'query', 'rawcontinue'=>1, 'list'=>'allusers', 'augroup'=>'bureaucrat', 'aulimit'=>500));
+        global $metawiki, $wiki, $user;
+        $x = $wiki->apiQuery(array('action'=>'query', 'rawcontinue'=>1, 'list'=>'allusers', 'augroup'=>'steward', 'aulimit'=>5000));
+        foreach ($x['query']['allusers'] as $t) {
+            $crats[] = $t['name'];
+        }
+        $x = $metawiki->apiQuery(array('action'=>'query', 'rawcontinue'=>1, 'list'=>'allusers', 'augroup'=>'steward|global-renamer', 'aulimit'=>5000));
         foreach ($x['query']['allusers'] as $t) {
             $crats[] = $t['name'];
         }

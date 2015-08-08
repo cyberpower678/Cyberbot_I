@@ -250,7 +250,7 @@ while( true ) {
             else $statstr .= "||{{ntsh|".round( ( time() - $content[8] ), 0 )."}}".formatclosingdate( time() - $content[8] );
         }
         $statstr .= "\n|}\n\n";
-        $site->initPage( "User:Snotbot/Current AfD's" )->edit( "<big>{{red|The page is now updated at [[User:Cyberbot I/Current AfD's]].  Please change links accordingly.  You can still see the table below.}}\n{{User:Cyberbot I/Current AfD's}}", "Redirecting to new page location." );
+        $site->initPage( "User:Snotbot/Current AfD's", null, false )->edit( "<big>{{red|The page is now updated at [[User:Cyberbot I/Current AfD's]].  Please change links accordingly.  You can still see the table below.}}\n{{User:Cyberbot I/Current AfD's}}", "Redirecting to new page location." );
         $site->initPage( "User:Cyberbot I/Current AfD's" )->edit( $statstr, "Updating list of current AfD's." );  
     }
     $deletionpages = $site->categorymembers( "Category:Articles for deletion", false, null, -1 );
@@ -485,6 +485,7 @@ function parsevote( $v ) {
 
 function transclusions( $page ) {
     global $site;
+    $links = array();
     $data = $site->embeddedin( $page, array(4), -1 );
     foreach( $data as $dat ) if( str_ireplace( "Wikipedia:Articles for deletion/Log/", "", $dat ) != $dat ) $links[] = $dat;
     if( in_array( "Wikipedia:Articles for deletion/Log/Today", $links ) ) {

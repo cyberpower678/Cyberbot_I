@@ -10,85 +10,68 @@ $site = Peachy::newWiki( "soxbot" );
 
 $site->set_runpage("User:Cyberbot I/Run/Sandbox");
 
-while(true) {
-	echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
-	date_default_timezone_set('UTC');//Use UTC time.
+echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
+date_default_timezone_set('UTC');//Use UTC time.
 
-	//Define the text
-	$sandboxtext = "{{Sandbox heading}} <!-- Please leave this line alone! -->\n\n<!-- Hello! Feel free to try your formatting and editing skills below this line. As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
-	$sandboxtalktext = "{{Please leave this line alone (sandbox talk heading)}}\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
-	$introtext = "{{Please leave this line alone}}\n<!-- Feel free to change the text below this line. No profanity, please. -->";
-	$xXtext = "<noinclude>\nThis sandbox is itself a template.  This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n</noinclude>\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
-	$tstext = "<noinclude>\nThis sandbox is itself a template.  This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n</noinclude>\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----";
-	$tutorialtext = "{{Please leave this line alone (tutorial sandbox heading)}}\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
-	$tutorialtalktext = "{{Please leave this line alone (sandbox talk heading)}}\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
-	$afctext = "{{Please leave this line alone (AFC sandbox heading)}}\n<!-- Hello! Feel free to try your formatting and editing skills below this line. As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
+//Define the text
+$sandboxtext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
+$sandboxtalktext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
+$xXtext = "<noinclude>\nThis sandbox is itself a template. This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----</noinclude>\n";
+$tstext = "<noinclude>\nThis sandbox is itself a template. This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----</noinclude>\n";
+$tutorialtext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
+$tutorialtalktext = "{{Please leave this line alone (sandbox talk heading)}}\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
 
-	$hour = date("%H"); 
-	$minute = date("%i");
+$hour = date("H"); 
+$minute = date("i");
 
-	$touse = initPage('User:Cyberpower678/Sandbots.css')->get_text();
-	echo $touse;
-	$touse = explode("|", $touse);
-
-	foreach ($touse as $i) {
-					$pagetext = array (
-						"Wikipedia:Sandbox"=>$sandboxtext,
-						"Wikipedia talk:Sandbox"=>$sandboxtalktext,
-						"Wikipedia:Introduction"=>$introtext,
-						"Template:X1"=>$xXtext,
-						"Template talk:X1"=>$tutorialtalktext,
-						"Template:X2"=>$xXtext,
-						"Template talk:X2"=>$tutorialtalktext,
-						"Template:X3"=>$xXtext,
-						"Template talk:X3"=>$tutorialtalktext,
-						"Template:X4"=>$xXtext,
-						"Template talk:X4"=>$tutorialtalktext,
-						"Template:X5"=>$xXtext,
-						"Template talk:X5"=>$tutorialtalktext,
-						"Template:X6"=>$xXtext,
-						"Template talk:X6"=>$tutorialtalktext,
-						"Template:X7"=>$xXtext,
-						"Template talk:X7"=>$tutorialtalktext,
-						"Template:X8"=>$xXtext,
-						"Template talk:X8"=>$tutorialtalktext,
-						"Template:X9"=>$xXtext,
-						"Template talk:X9"=>$tutorialtalktext,
-						"Template:Template sandbox"=>$tstext,
-						"Wikipedia:Tutorial (Editing)/sandbox"=>$tutorialtext,
-						"Wikipedia talk:Tutorial (Editing)/sandbox"=>$tutorialtalktext,
-						"Wikipedia:Tutorial (Formatting)/sandbox"=>$tutorialtext,
-						"Wikipedia talk:Tutorial (Formatting)/sandbox"=>$tutorialtalktext,
-						"Wikipedia:Tutorial (Wikipedia links)/sandbox"=>$tutorialtext,
-						"Wikipedia talk:Tutorial (Wikipedia links)/sandbox"=>$tutorialtalktext,
-						"Wikipedia:Tutorial (External links)/sandbox"=>$tutorialtext,
-						"Wikipedia talk:Tutorial (External links)/sandbox"=>$tutorialtalktext,
-						"Wikipedia:Tutorial (Keep in mind)/sandbox"=>$tutorialtext,
-						"Wikipedia talk:Tutorial (Keep in mind)/sandbox"=>$tutorialtalktext
-					);
-					$isenabled = explode("=", $i);
-					$pagetitle = $isenabled[0];
-					if (strpos($isenabled[1], $site->get_username()) !== false) {
-									$page = initPage($pagetitle, null, false);
-									$currtext = $page->get_text();
-									if (
-										(
-											strpos($currtext, $pagetext[$pagetitle]) === false && 
-											( 
-												$pagetitle == "Wikipedia:Sandbox" || 
-												$pagetitle == "Wikipedia talk:Sandbox" || 
-												$pagetitle == "Wikipedia:Introduction"
-											)
-										) || 
-										(
-											($hour == 00 || $hour == 12 || $hour  == 24) && 
-											(00 <= $minute && $minute >= 02)
-										)
-									) {
-													echo "Time to clean $pagetitle!\n";
-													$page->edit($pagetext[$pagetitle],'Clearing the sandbox ([[WP:BOT|BOT]] EDIT)');
-									}
-					}
-	}
-	sleep(300);
+$pagetext = array (
+	"Wikipedia:Sandbox"=>$sandboxtext,
+    "User:Sandbox"=>$sandboxtext,  
+);
+if( ($hour == 00 || $hour == 12 || $hour  == 24) ) {
+    $pagetext = array_merge( $pagetext, array (
+        "Wikipedia talk:Sandbox"=>$sandboxtalktext,
+        "User talk:Sandbox"=>$sandboxtalktext,
+        "Template:X1"=>$xXtext,
+        "Template:X2"=>$xXtext,
+        "Template:X3"=>$xXtext,
+        "Template:X4"=>$xXtext,
+        "Template:X5"=>$xXtext,
+        "Template:X6"=>$xXtext,
+        "Template:X7"=>$xXtext,
+        "Template:X8"=>$xXtext,
+        "Template:X9"=>$xXtext,
+        "Template:X10"=>$xXtext,
+        "Template:X11"=>$xXtext,
+        "Template:X12"=>$xXtext,
+        "Template:Template sandbox"=>$tstext,
+        "Template talk:X1"=>$tutorialtalktext,
+        "Template talk:X2"=>$tutorialtalktext,
+        "Template talk:X3"=>$tutorialtalktext,
+        "Template talk:X4"=>$tutorialtalktext,
+        "Template talk:X5"=>$tutorialtalktext,
+        "Template talk:X6"=>$tutorialtalktext,
+        "Template talk:X7"=>$tutorialtalktext,
+        "Template talk:X8"=>$tutorialtalktext,
+        "Template talk:X9"=>$tutorialtalktext,
+        "Template talk:X10"=>$tutorialtalktext,
+        "Template talk:X11"=>$tutorialtalktext,
+        "Template talk:X12"=>$tutorialtalktext,
+        "Template talk:Template sandbox"=>$tutorialtalktext,
+        "Wikipedia:Tutorial (Editing)/sandbox"=>$tutorialtext,
+        "Wikipedia:Tutorial (Formatting)/sandbox"=>$tutorialtext,
+        "Wikipedia:Tutorial (Wikipedia links)/sandbox"=>$tutorialtext,
+        "Wikipedia:Tutorial (External links)/sandbox"=>$tutorialtext,
+        "Wikipedia:Tutorial (Keep in mind)/sandbox"=>$tutorialtext,
+        "Wikipedia talk:Tutorial (Editing)/sandbox"=>$tutorialtalktext,
+        "Wikipedia talk:Tutorial (Formatting)/sandbox"=>$tutorialtalktext,
+        "Wikipedia talk:Tutorial (Wikipedia links)/sandbox"=>$tutorialtalktext,
+        "Wikipedia talk:Tutorial (External links)/sandbox"=>$tutorialtalktext,
+        "Wikipedia talk:Tutorial (Keep in mind)/sandbox"=>$tutorialtalktext
+    ));    
+}
+foreach( $pagetext as $pagetitle=>$text) {
+	$page = initPage($pagetitle, null, false);
+	echo "Time to clean $pagetitle!\n";
+	$page->edit($text,'Clearing the sandbox ([[WP:BOT|BOT]] EDIT)');
 }

@@ -107,6 +107,9 @@ while(true) {
 			sleep(3);
 		}
 	}
+
+	// Take a break before starting over
+	sleep( 600 );
 }
 
 ?>

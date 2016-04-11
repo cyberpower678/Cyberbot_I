@@ -87,4 +87,7 @@ while(true) {
 		$wikiur->initPage("صارف:Cyberbot_I/Run/Adminstats")->edit($adminstatsur,"Setting task status to $adminstatsur.",true);
 		$oldadminstatsur = $adminstatsur;
 	}
+
+	// Take a break before starting over
+	sleep( 600 );
 }

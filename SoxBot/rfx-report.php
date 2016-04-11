@@ -92,6 +92,9 @@ while(true) {
 
 
     $reportbuffer = initPage( $output )->edit( $out, "Updating RFX Report, $numrfa RFAs, $numrfb RFBs" );
+
+	// Take a break before starting over
+	sleep( 600 );
 }
 
 function bailout($message) {

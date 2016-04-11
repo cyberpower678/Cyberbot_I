@@ -34,4 +34,7 @@ while(true) {
 	}
 
 	echo "Done\n\n";
+
+	// Take a break before starting over
+	sleep( 600 );
 }

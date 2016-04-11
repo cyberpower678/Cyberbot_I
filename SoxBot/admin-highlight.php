@@ -74,4 +74,7 @@ while(true) {
 			}
 		}
 	}
+
+	// Take a break before starting over
+	sleep( 600 );
 }

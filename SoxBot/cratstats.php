@@ -186,5 +186,8 @@ while(true) {
 		initPage('Template:Cratstats')->edit($text, 'Posting status of Bureaucrat related areas. (BOT EDIT)');
 		$oldout = $text;
 	}
+
+	// Take a break before starting over
+	sleep( 600 );
 }
 ?>

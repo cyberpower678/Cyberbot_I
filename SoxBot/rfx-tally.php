@@ -57,4 +57,7 @@ while(true) {
 	unset( $open_rfxs );
 	unset( $open_rfx );
 	unset( $tallys );
+
+	// Take a break before starting over
+	sleep( 600 );
 }

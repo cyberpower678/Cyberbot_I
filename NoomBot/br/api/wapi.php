@@ -17,6 +17,10 @@ class wikibot {
 	public $queue;
 	private $cache = array();
 	private $lastError = array();
+	private $consumerkey;
+	private $consumersecret;
+	private $accesstoken;
+	private $accesssecret;
 
 	function __construct($echoresults = FALSE, $loglevel = 2) {
 		date_default_timezone_set('UTC');
@@ -28,9 +32,11 @@ class wikibot {
 		$this->user   = "";
 		$this->fileid = rand(1,1000);
 		$this->api  = "https://en.wikipedia.org/w/api.php";
+		$this->OAuth = "https://en.wikipedia.org/w/index.php?title=Special:OAuth";
 		curl_setopt($this->ch,CURLOPT_USERAGENT,'wAPI/1.1.1 (Bot: Cyberbot I Operator: Cyberpower678)');
 		curl_setopt($this->ch,CURLOPT_COOKIEFILE,'curl/wp.bot-'.$this->fileid.'.cookie');
 		curl_setopt($this->ch,CURLOPT_COOKIEJAR,'curl/wp.bot-'.$this->fileid.'.cookie');
+		curl_setopt($this->ch,CURLOPT_SSL_VERIFYPEER, 0);
 	}
 
 	function __destruct() {
@@ -46,6 +52,69 @@ class wikibot {
 			echo $pre[$num].$string.''.PHP_EOL;
 		}
 	}
+	
+	function generateOAuthHeader( $method = 'GET', $url ) {
+		$headerArr = array(
+			        // OAuth information
+					        'oauth_consumer_key' => $this->consumerkey,
+					        'oauth_token' => $this->accesstoken,
+					        'oauth_version' => '1.0',
+					        'oauth_nonce' => md5( microtime() . mt_rand() ),
+					        'oauth_timestamp' => time(),
+
+					        // We're using secret key signatures here.
+					        'oauth_signature_method' => 'HMAC-SHA1',
+					    );
+		$signature = $this->generateSignature( $method, $url, $headerArr  );
+		$headerArr['oauth_signature'] = $signature; 
+
+		$header = array();
+		foreach ( $headerArr as $k => $v ) {
+			$header[] = rawurlencode( $k ) . '="' . rawurlencode( $v ) . '"';
+		}
+		$header = 'Authorization: OAuth ' . join( ', ', $header );
+		unset( $headerArr ); 
+		return $header;
+	}
+	
+	function generateSignature( $method, $url, $params = array() ) {
+	    $parts = parse_url( $url );
+
+	    // We need to normalize the endpoint URL
+	    $scheme = isset( $parts['scheme'] ) ? $parts['scheme'] : 'http';
+	    $host = isset( $parts['host'] ) ? $parts['host'] : '';
+	    $port = isset( $parts['port'] ) ? $parts['port'] : ( $scheme == 'https' ? '443' : '80' );
+	    $path = isset( $parts['path'] ) ? $parts['path'] : '';
+	    if ( ( $scheme == 'https' && $port != '443' ) ||
+	        ( $scheme == 'http' && $port != '80' ) 
+	    ) {
+	        // Only include the port if it's not the default
+	        $host = "$host:$port";
+	    }
+
+	    // Also the parameters
+	    $pairs = array();
+	    parse_str( isset( $parts['query'] ) ? $parts['query'] : '', $query );
+	    $query += $params;
+	    unset( $query['oauth_signature'] );
+	    if ( $query ) {
+	        $query = array_combine(
+	            // rawurlencode follows RFC 3986 since PHP 5.3
+	            array_map( 'rawurlencode', array_keys( $query ) ),
+	            array_map( 'rawurlencode', array_values( $query ) )
+	        );
+	        ksort( $query, SORT_STRING );
+	        foreach ( $query as $k => $v ) {
+	            $pairs[] = "$k=$v";
+	        }
+	    }
+
+	    $toSign = rawurlencode( strtoupper( $method ) ) . '&' .
+	        rawurlencode( "$scheme://$host$path" ) . '&' .
+	        rawurlencode( join( '&', $pairs ) );
+	    $key = rawurlencode( $this->consumersecret ) . '&' . rawurlencode( $this->accesssecret );
+	    return base64_encode( hash_hmac( 'sha1', $toSign, $key, true ) );
+	}
 
 	function get($to, $format = 'php') {
 		$reqtime = microtime(1);
@@ -55,6 +124,7 @@ class wikibot {
 		curl_setopt($this->ch, CURLOPT_CONNECTTIMEOUT, 30);
 		curl_setopt($this->ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($this->ch, CURLOPT_HTTPGET, 1);
+		curl_setopt($this->ch, CURLOPT_HTTPHEADER, array( $this->generateOAuthHeader( 'GET', $to ) ) );
 		$ret = curl_exec($this->ch);
 		$this->log('GET: '.$to.' ('.(microtime(1) - $reqtime).'s)', 3);
 		try {
@@ -85,7 +155,7 @@ class wikibot {
 		curl_setopt($this->ch,CURLOPT_POST,1);
 		curl_setopt($this->ch,CURLOPT_RETURNTRANSFER,1);
 		curl_setopt($this->ch,CURLOPT_POSTFIELDS, $fields);
-		curl_setopt($this->ch,CURLOPT_HTTPHEADER, array('Expect:'));
+		curl_setopt($this->ch, CURLOPT_HTTPHEADER, array( $this->generateOAuthHeader( 'POST', $to ) ) );
 		$ret = curl_exec($this->ch);
 		$this->log('POST: '.$to.' ('.(microtime(1) - $reqtime).'s)', 3);
 		return unserialize(trim($ret));
@@ -145,15 +215,16 @@ class wikibot {
 				curl_setopt($m, CURLOPT_CONNECTTIMEOUT, 30);
 				curl_setopt($m, CURLOPT_RETURNTRANSFER, 1);
 				curl_setopt($m, CURLOPT_USERAGENT, $this->ch);
-				curl_setopt($m, CURLOPT_HTTPHEADER, array('Expect:'));
 
 				if ($q['post'] == TRUE) {
 					curl_setopt($m, CURLOPT_POST, 1);
 					curl_setopt($m, CURLOPT_POSTFIELDS, $q['params']);
+					curl_setopt($m, CURLOPT_HTTPHEADER, array( $this->generateOAuthHeader( 'POST', $this->api ) ) );
 				}
 				if ($q['post'] == FALSE) {
 					//curl_setopt($m, CURLOPT_URL, $this->api.$q['params']);
 					curl_setopt($m, CURLOPT_POSTFIELDS, $q['params']);
+					curl_setopt($this->ch, CURLOPT_HTTPHEADER, array( $this->generateOAuthHeader( 'GET', $this->api ) ) );
 				}
 				$allq[] = array('name' => $q['name'], 'data' => null, 'obj' => $m);
 				curl_multi_add_handle($mh, $m);
@@ -186,35 +257,76 @@ class wikibot {
 		}
 	}
 
-	function login($user, $pass) {
-		$array = array('action' => 'login', 'lgname' => $user, 'lgpassword' => $pass);
-		$cookie = $this->query($array, true);
-		if ($cookie['login']['result'] == 'Success') { return true; }
-		else {
-			if ($cookie['login']['result'] == 'NeedToken') {
-				$array['lgtoken'] = $cookie['login']['token'];
-				$tokenpost = $this->query($array, true);
-				if ($tokenpost['login']['result'] == 'Success') {
-					$this->user   = $tokenpost['login']['lgusername'];
-					$this->userid = $tokenpost['login']['lguserid'];
-					$this->userflags = $this->getuserflags($this->user);
-					if (array_search('bot', $this->userflags) == FALSE) {
-						$this->log('Your account does not have the \'BOT\' flag!', 2);
-						return true;
-					}
-					else return true;
-				}
-				else {
-					$this->setLastError(array('component' => 'api', 'code' => '-1', 'msg' => $tokenpost['login']['result']));
-					return false;
-				}
-			}
-			else { 
-				$this->setLastError(array('component' => 'api', 'code' => '-1', 'msg' => $tokenpost['login']['result']));
-				return FALSE;
-			}
-		}
-		curl_setopt($this->ch,CURLOPT_USERAGENT,'wAPI/1.1 (Bot: '.$user.' Operator: Cyberpower678 Contact: English Wikipedia Email )');
+	function login($user, $consumerkey, $consumersecret, $accesstoken, $accesssecret) {
+		
+		$error = "";
+		$url = $this->OAuth . '/identify';
+		$this->consumerkey = $consumerkey;
+		$this->consumersecret = $consumersecret;
+		$this->accesstoken = $accesstoken;
+		$this->accesssecret = $accesssecret;
+
+	    curl_setopt( $this->ch, CURLOPT_URL, $url );
+	    curl_setopt( $this->ch, CURLOPT_HTTPHEADER, array( $this->generateOAuthHeader( 'GET', $url ) ) );
+	    curl_setopt( $this->ch, CURLOPT_HTTPGET, 1 );
+	    curl_setopt( $this->ch, CURLOPT_POST, 0 );
+	    curl_setopt( $this->ch, CURLOPT_RETURNTRANSFER, 1 );
+	    curl_setopt( $this->ch, CURLOPT_USERAGENT,'wAPI/1.1 (Bot: '.$user.' Operator: Cyberpower678 Contact: English Wikipedia Email )');
+	    $data = curl_exec( $this->ch );
+	    if ( !$data ) {
+	        $error = 'Curl error: ' . htmlspecialchars( curl_error( $this->ch ) );
+	        goto loginerror;
+	    }
+	    $err = json_decode( $data );
+	    if ( is_object( $err ) && isset( $err->error ) && $err->error === 'mwoauthdatastore-access-token-not-found' ) {
+	        // We're not authorized!
+	        $error = "Missing authorization or authorization failed";
+	        goto loginerror;
+	    }
+
+	    // There are three fields in the response
+	    $fields = explode( '.', $data );
+	    if ( count( $fields ) !== 3 ) {
+	        $error = 'Invalid identify response: ' . htmlspecialchars( $data );
+	        goto loginerror;
+	    }
+
+	    // Validate the header. MWOAuth always returns alg "HS256".
+	    $header = base64_decode( strtr( $fields[0], '-_', '+/' ), true );
+	    if ( $header !== false ) {
+	        $header = json_decode( $header );
+	    }
+	    if ( !is_object( $header ) || $header->typ !== 'JWT' || $header->alg !== 'HS256' ) {
+	        $error = 'Invalid header in identify response: ' . htmlspecialchars( $data );
+	        goto loginerror;
+	    }
+
+	    // Verify the signature
+	    $sig = base64_decode( strtr( $fields[2], '-_', '+/' ), true );
+	    $check = hash_hmac( 'sha256', $fields[0] . '.' . $fields[1], $this->consumersecret, true );
+	    if ( $sig !== $check ) {
+	        $error = 'JWT signature validation failed: ' . htmlspecialchars( $data );
+	        goto loginerror;
+	    }
+
+	    // Decode the payload
+	    $payload = base64_decode( strtr( $fields[1], '-_', '+/' ), true );
+	    if ( $payload !== false ) {
+	        $payload = json_decode( $payload );
+	    }
+	    if ( !is_object( $payload ) ) {
+	        $error = 'Invalid payload in identify response: ' . htmlspecialchars( $data );
+	        goto loginerror;
+	    }
+
+	    if( $user == $payload->username ) {
+	        return true;
+	    }
+	    else {
+loginerror: if( !empty( $error ) ) $this->setLastError(array('component' => 'oauth', 'code' => '-1', 'msg' => $error));
+	        else $this->setLastError(array('component' => 'oauth', 'code' => '-1', 'msg' => "The bot logged into the wrong username."));
+	        return false;
+	    }
 	}
 
 	private function setLastError($errordetails) {

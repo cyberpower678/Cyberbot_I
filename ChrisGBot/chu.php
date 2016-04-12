@@ -455,13 +455,13 @@ class chu {
 
 /* Connect to the database */
 
-$toolserver_mycnf = parse_ini_file('/data/project/cyberbot/replica.my.cnf');
+$toolserver_mycnf = parse_ini_file('/home/cyberpower678/.my.cnf');
 $toolserver_username = $toolserver_mycnf['user'];
 $toolserver_password = $toolserver_mycnf['password'];
 
 $db_enwiki = new database('enwiki.labsdb',$toolserver_username,$toolserver_password,'enwiki_p');
 $db_central = new database('centralauth.labsdb',$toolserver_username,$toolserver_password,'centralauth_p');
-require_once( '/data/project/cyberbot/Peachy/Init.php' );
+require_once( '/home/cyberpower678/Peachy/Init.php' );
 
 $user = "Cyberbot I";
 $wiki = Peachy::newWiki( "soxbot" );

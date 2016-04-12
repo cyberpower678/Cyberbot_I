@@ -25,7 +25,7 @@ if (version_compare(PHP_VERSION, '5.0.0', '<')) {
 	botdie("Running on an outdated PHP_VERSION: ".PHP_VERSION);
 }
 $b = new wikibot();
-$b->login($user, $pass)or botdie('Failed to login');
+$b->login($user, $consumerKey, $consumerSecret, $accessToken, $accessSecret)or botdie('Failed to login');
 
 if (!isset($m)) $m = mysql_connect($db_host, $db_user, $db_pass)or botdie('Failed to connect to MySQL');
 

@@ -1,8 +1,8 @@
 <?php
 
-ini_set('memory_limit','5G');
+ini_set('memory_limit','512M');
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
-require_once( '/data/project/cyberbot/Peachy/Init.php' );
+require_once( '/home/cyberpower678/Peachy/Init.php' );
 
 $site = Peachy::newWiki( "soxbot" );
 $site->set_runpage( "User:Cyberbot I/Run/RfUBot" );

@@ -4,11 +4,12 @@ ini_set('memory_limit','16M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once('/data/project/cyberbot/Peachy/Init.php');
+require_once('/home/cyberpower678/Peachy/Init.php');
 
 $wiki = Peachy::newWiki("soxbot");
 
 $wiki->set_runpage("User:Cyberbot I/Run/Tally");
+$oldout = "";
 
 while(true) {
 	echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
@@ -48,11 +49,11 @@ while(true) {
 
 	$out .= "|#default= (?/?/?)\n}}}}}}";
 
-	echo $out;
-
-	initPage("Template:RfA tally", null, false, true)->edit("<span id=\"rfatally\">{{{{{|safesubst:}}}User:Cyberpower678/Tally|1={{{1|{{SUBPAGENAME}}}}}}}</span><noinclude>\n[[Category:Templates related to requests for adminship]]\n</noinclude>","Overriding existing code.  Cyberbot I maintains this task.");
-
-	$tally_page = initPage("User:Cyberpower678/Tally")->edit($out,"Updating RFA tally");
+	if( $oldout != $out ) {
+		initPage("Template:RfA tally", null, false, true)->edit("<span id=\"rfatally\">{{{{{|safesubst:}}}User:Cyberpower678/Tally|1={{{1|{{SUBPAGENAME}}}}}}}</span><noinclude>\n[[Category:Templates related to requests for adminship]]\n</noinclude>","Overriding existing code.  Cyberbot I maintains this task.");
+		$tally_page = initPage("User:Cyberpower678/Tally")->edit($out,"Updating RFA tally");
+		$oldout = $out;
+	}
 	unset( $open_rfxs );
 	unset( $open_rfx );
 	unset( $tallys );

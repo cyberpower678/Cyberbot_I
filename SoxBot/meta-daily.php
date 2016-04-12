@@ -2,7 +2,7 @@
 
 ini_set('memory_limit','16M');
 
-require_once( '/data/project/cyberbot/Peachy/Init.php' );
+require_once( '/home/cyberpower678/Peachy/Init.php' );
 
 $site = Peachy::newWiki( "meta" );
 

@@ -4,11 +4,13 @@ ini_set('memory_limit','512M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once( '/data/project/cyberbot/Peachy/Init.php' );
+require_once( '/home/cyberpower678/Peachy/Init.php' );
 
 $site = Peachy::newWiki( "soxbot" );
 
 $site->set_runpage("User:Cyberbot I/Run/Cratstats");
+
+$oldout = "";
 
 function getEndDate( $rfa, $code ) {
 	global $site;
@@ -180,6 +182,9 @@ while(true) {
 	echo "$numchuu USURP requests, $numchu CHU requests, $numrfa RfAs, $numrfb RfBs, $numorfa overdue RfAs, $numorfb overdue RfBs, $numbrfa BRFAs, $numsul SUL CHU requests, $numnfbrfa Approved BRFAs.\n";
 
 	$text = "{{Cratstats/Core|usurp=$numchuu|chu=$numchu|chusul=$numsul|rfa=$numrfa|rfb=$numrfb|orfa=$numorfa|orfb=$numorfb|brfa=$numbrfa|abrfa=$numnfbrfa|style={{{style|}}}}}";
-	initPage('Template:Cratstats')->edit($text, 'Posting status of Bureaucrat related areas. (BOT EDIT)');
+	if( $oldout != $text ) {
+		initPage('Template:Cratstats')->edit($text, 'Posting status of Bureaucrat related areas. (BOT EDIT)');
+		$oldout = $text;
+	}
 }
 ?>

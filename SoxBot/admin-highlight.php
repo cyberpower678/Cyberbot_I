@@ -4,7 +4,9 @@ ini_set('memory_limit','16M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once( '/data/project/cyberbot/Peachy/Init.php' );
+require_once( '/home/cyberpower678/Peachy/Init.php' );
+$oldsoxbot = "";
+$oldcommons = "";
 
 while(true) {
 	echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
@@ -58,8 +60,18 @@ while(true) {
 		}
 		if( count($admins) != (count(explode("\n",$data)) - 1) ) { die("Error?"); }
 		echo $data;
-		
-		$page = initPage( "User:Cyberbot I/adminrights-admins.js" );
-		$page->edit( $data, 'Updating admins list', true );
+		if( $bot = "soxbot" ) {
+			if( $oldsoxbot != $data ) {
+				$page = initPage( "User:Cyberbot I/adminrights-admins.js" );
+				$page->edit( $data, 'Updating admins list', true );
+				$oldsoxbot = $data;
+			}
+		} else {
+			if( $oldcommons != $data ) {
+				$page = initPage( "User:Cyberbot I/adminrights-admins.js" );
+				$page->edit( $data, 'Updating admins list', true );
+				$oldcommons = $data;
+			}
+		}
 	}
 }

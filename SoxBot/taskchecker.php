@@ -1,10 +1,10 @@
-﻿<?php
+<?php
 
 ini_set('memory_limit','16M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once('/data/project/cyberbot/Peachy/Init.php');
+require_once('/home/cyberpower678/Peachy/Init.php');
 
 $wikien = Peachy::newWiki("soxbot");
 $wikisimp = Peachy::newWiki("simple");
@@ -13,6 +13,16 @@ $wikimeta = Peachy::newWiki("meta");
 $wikicy = Peachy::newWiki("cywikiI");
 $wikiur = Peachy::newWiki("urwikiI");
 $wikidata = Peachy::newWiki("wikidata");
+
+$oldmetacont = "";
+$oldmetadaily = "";
+$olddatefixer = "";
+$oldarcommons = "";
+$oldadminstatscommons = "";
+$oldadminstatssimp = "";
+$oldadminstatscy = "";
+$oldadminstatsur = "";
+$oldadminstatswikidata = "";
 
 while(true) {
 	echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
@@ -29,27 +39,52 @@ while(true) {
 
 	echo "Updating simple.wikipedia tasks.\n";
 
-	$wikisimp->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatssimp,"Setting task status to $adminstatssimp.",true);
-	$wikisimp->initPage("User:Cyberbot I/Run/Datefixer")->edit($datefixer,"Setting task status to $datefixer.",true);
+	if( $oldadminstatssimp != $adminstatssimp ) {
+		$wikisimp->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatssimp,"Setting task status to $adminstatssimp.",true);
+		$oldadminstatssimp = $adminstatssimp;
+	}
+	if( $olddatefixer != $datefixer ) {
+		$wikisimp->initPage("User:Cyberbot I/Run/Datefixer")->edit($datefixer,"Setting task status to $datefixer.",true);
+		$olddatefixer = $datefixer;
+	}
 
 	echo "Updating commons.wikipedia tasks.\n";
 
-	$wikicommons->initPage("User:Cyberbot I/Run/AR")->edit($arcommons,"Setting task status to $arcommons.",true);
-	$wikicommons->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatssimp,"Setting task status to $adminstatscommons.",true);
+	if( $oldarcommons != $arcommons ) {
+		$wikicommons->initPage("User:Cyberbot I/Run/AR")->edit($arcommons,"Setting task status to $arcommons.",true);
+		$oldarcommons = $arcommons;
+	}
+	if( $oldadminstatscommons != $adminstatscommons ) {
+		$wikicommons->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatscommons,"Setting task status to $adminstatscommons.",true);
+		$oldadminstatscommons = $adminstatscommons;
+	}
 
 	echo "Updating www.wikidata tasks.\n";
-	$wikidata->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatswikidata,"Setting task status to $adminstatswikidata.",true);
-
+	if( $oldadminstatswikidata != $adminstatswikidata ) {
+		$wikidata->initPage("User:Cyberbot I/Run/Adminstats")->edit($adminstatswikidata,"Setting task status to $adminstatswikidata.",true);
+        $oldadminstatswikidata = $adminstatswikidata;
+	}
+	
 	echo "Updating meta.wikimedia tasks.\n";
-
-	$wikimeta->initPage("User:Cyberbot I/Run/Meta-daily")->edit($metadaily,"Setting task status to $metadaily.",true);
-	$wikimeta->initPage("User:Cyberbot I/Run/Meta-cont")->edit($metacont,"Setting task status to $metacont.",true);
-
+    if( $oldmetadaily != $metadaily ) {
+		$wikimeta->initPage("User:Cyberbot I/Run/Meta-daily")->edit($metadaily,"Setting task status to $metadaily.",true);
+		$oldmetadaily = $metadaily;
+	}
+	if( $oldmetacont != $metacont ) {
+		$wikimeta->initPage("User:Cyberbot I/Run/Meta-cont")->edit($metacont,"Setting task status to $metacont.",true);
+        $oldmetacont = $metacont;
+	}
 	echo "Updating cy.wikipedia tasks.\n";
 
-	$wikicy->initPage("Defnyddiwr:Cyberbot I/Run/Adminstats")->edit($adminstatscy,"Setting task status to $adminstatscy.",true);
-
+	if( $oldadminstatscy != $adminstatscy ) {
+		$wikicy->initPage("Defnyddiwr:Cyberbot I/Run/Adminstats")->edit($adminstatscy,"Setting task status to $adminstatscy.",true);
+        $oldadminstatscy = $adminstatscy;
+	}
+	
 	echo "Updating ur.wikipedia tasks.\n\n";
-
-	$wikiur->initPage("صارف:Cyberbot_I/Run/Adminstats")->edit($adminstatsur,"Setting task status to $adminstatsur.",true);
+    
+    if( $oldadminstatsur != $adminstatsur ) {
+		$wikiur->initPage("صارف:Cyberbot_I/Run/Adminstats")->edit($adminstatsur,"Setting task status to $adminstatsur.",true);
+		$oldadminstatsur = $adminstatsur;
+	}
 }

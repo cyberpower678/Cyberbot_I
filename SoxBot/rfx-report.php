@@ -4,7 +4,7 @@ ini_set('memory_limit','16M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once('/data/project/cyberbot/Peachy/Init.php');
+require_once('/home/cyberpower678/Peachy/Init.php');
 
 $wiki = Peachy::newWiki("soxbot");
 
@@ -18,11 +18,11 @@ while(true) {
     $text = preg_replace('/Last updated by \{\{#ifeq:\{\{\{simplesig\|false\}\}\}\|true\|\[\[User:Cyberbot I\|Cyberbot I\]\] \(\{\{#switch:\{\{User:Cyberbot I\/Status\}\}\|enable=Online\|disable=Offline\| #default=Unknown\}\}\)\|\{\{User:Cyberbot I\/Signature\}\}\}\} at \'\'\'(.*?)\'\'\'/i','Last updated by {{#ifeq:{{{simplesig|false}}}|true|[[User:Cyberbot I|Cyberbot I]] ({{#switch:{{User:Cyberbot I/Status}}|enable=Online|disable=Offline| #default=Unknown}})|{{User:Cyberbot I/Signature}}}} at \'\'\'~~~~~\'\'\'',$text);
 
     if ($timestamp[1] != null) {
-        file_put_contents('/data/project/cyberbot/bots/Timestamp', "<noinclude>{{shortcut|WP:RFXR||WP:BNRX|WP:BN/RfX Report}}</noinclude>\n{| {{{style|align=\"{{{align|right}}}\" cellspacing=\"0\" cellpadding=\"0\" style=\"white-space:wrap; clear: {{{clear|left}}}; margin-top: 0em; margin-bottom: .5em; float: {{{align|right}}};padding: .5em 0em 0em 1.4em; background: none;\"}}}\n|\n{| class=\"wikitable\"\n! RfA candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|-\n! RfB candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|}"."{{#ifeq:{{{showtimestamp|true}}}|false||<div align=\"right\">\n{{#ifeq:{{{smalltimestamp|false}}}|true|<small>}}''No RfXs since ".$timestamp[1].".—{{#ifeq:{{{simplesig|false}}}|true|[[User:Cyberbot I|Cyberbot I]] ({{#switch:{{User:Cyberbot I/Status}}|enable=Online|disable=Offline| #default=Unknown}})|{{User:Cyberbot I/Signature}}}}{{#ifeq:{{{smalltimestamp|false}}}|true|</small>}}\n{{#ifeq:{{User:Cyberbot I/Run/RfXReport}}|enable||'''{{red|RfX Reporter disabled.}}'''}}\n</div>}}\n|}");
+        file_put_contents('/home/cyberpower678/bots/Timestamp', "<noinclude>{{shortcut|WP:RFXR||WP:BNRX|WP:BN/RfX Report}}</noinclude>\n{| {{{style|align=\"{{{align|right}}}\" cellspacing=\"0\" cellpadding=\"0\" style=\"white-space:wrap; clear: {{{clear|left}}}; margin-top: 0em; margin-bottom: .5em; float: {{{align|right}}};padding: .5em 0em 0em 1.4em; background: none;\"}}}\n|\n{| class=\"wikitable\"\n! RfA candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|-\n! RfB candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|}"."{{#ifeq:{{{showtimestamp|true}}}|false||<div align=\"right\">\n{{#ifeq:{{{smalltimestamp|false}}}|true|<small>}}''No RfXs since ".$timestamp[1].".—{{#ifeq:{{{simplesig|false}}}|true|[[User:Cyberbot I|Cyberbot I]] ({{#switch:{{User:Cyberbot I/Status}}|enable=Online|disable=Offline| #default=Unknown}})|{{User:Cyberbot I/Signature}}}}{{#ifeq:{{{smalltimestamp|false}}}|true|</small>}}\n{{#ifeq:{{User:Cyberbot I/Run/RfXReport}}|enable||'''{{red|RfX Reporter disabled.}}'''}}\n</div>}}\n|}");
         $timestamp = "<noinclude>{{shortcut|WP:RFXR||WP:BNRX|WP:BN/RfX Report}}</noinclude>\n{| {{{style|align=\"{{{align|right}}}\" cellspacing=\"0\" cellpadding=\"0\" style=\"white-space:wrap; clear: {{{clear|left}}}; margin-top: 0em; margin-bottom: .5em; float: {{{align|right}}};padding: .5em 0em 0em 1.4em; background: none;\"}}}\n|\n{| class=\"wikitable\"\n! RfA candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|-\n! RfB candidate !! S !! O !! N !! S% !! Ending (UTC) !! Time left !! Dups? !! Report\n|}"."{{#ifeq:{{{showtimestamp|true}}}|false||<div align=\"right\">\n{{#ifeq:{{{smalltimestamp|false}}}|true|<small>}}''No RfXs since ".$timestamp[1].".—{{#ifeq:{{{simplesig|false}}}|true|[[User:Cyberbot I|Cyberbot I]] ({{#switch:{{User:Cyberbot I/Status}}|enable=Online|disable=Offline| #default=Unknown}})|{{User:Cyberbot I/Signature}}}}{{#ifeq:{{{smalltimestamp|false}}}|true|</small>}}\n{{#ifeq:{{User:Cyberbot I/Run/RfXReport}}|enable||'''{{red|RfX Reporter disabled.}}'''}}\n</div>}}\n|}";
     }
     else {
-        $timestamp = file_get_contents('/data/project/cyberbot/bots/Timestamp');
+        $timestamp = file_get_contents('/home/cyberpower678/bots/Timestamp');
     }
 
     echo "Searching for RfX's on the main RfA page...\n\n";

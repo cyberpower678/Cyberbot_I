@@ -4,33 +4,34 @@ ini_set('memory_limit','16M');
 
 echo "----------STARTING UP SCRIPT----------\nStart Timestamp: ".date('r')."\n\n";
 
-require_once('/data/project/cyberbot/Peachy/Init.php');
+require_once('/home/cyberpower678/Peachy/Init.php');
 
 $wiki = Peachy::newWiki("soxbot");
 $wiki2 = Peachy::newWiki("cyberbotii");
-$wiki3 = Peachy::newWiki("cyberbottrial");
+//$wiki3 = Peachy::newWiki("cyberbottrial");
+
+$out = "";
+$oldout = "";
 
 while(true) {
 	echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
 	echo "Updating Readiness\n\n";
 
-	$out = "{{{{{|safesubst:}}}#switch:{{{{{|safesubst:}}}CURRENTDAY}}|{{subst:CURRENTDAY}}=enable|#default=disable}}";
+	$out = "{{{{{|safesubst:}}}#switch:{{{{{|safesubst:}}}CURRENTDAY}}|".date( 'j' )."=enable|#default=disable}}";
+    if( $oldout != $out ) {
+		$output = "User:Cyberbot I/Status";
 
-	$output = "User:Cyberbot I/Status";
+		$wiki->initPage( $output )->edit( $out, "Updating readiness of bot." );
 
-	$wiki->initPage( $output )->edit( $out, "Updating readiness of bot." );
+		$output = "User:Cyberbot II/Status";
 
-	$out = "{{{{{|safesubst:}}}#switch:{{{{{|safesubst:}}}CURRENTDAY}}|{{subst:CURRENTDAY}}=enable|#default=disable}}";
+		$wiki2->initPage( $output )->edit( $out, "Updating readiness of bot." );
 
-	$output = "User:Cyberbot II/Status";
+		//$output = "User:Cyberbot Trial Bot/Status";
 
-	$wiki2->initPage( $output )->edit( $out, "Updating readiness of bot." );
-
-	$out = "{{{{{|safesubst:}}}#switch:{{{{{|safesubst:}}}CURRENTDAY}}|{{subst:CURRENTDAY}}=enable|#default=disable}}";
-
-	$output = "User:Cyberbot Trial Bot/Status";
-
-	$wiki3->initPage( $output )->edit( $out, "Updating readiness of bot." );
+		//$wiki3->initPage( $output )->edit( $out, "Updating readiness of bot." );
+		$oldout = $out;
+	}
 
 	echo "Done\n\n";
 }

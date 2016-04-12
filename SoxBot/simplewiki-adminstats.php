@@ -2,4 +2,4 @@
 
 define( 'USESIMPLE', true );
 
-require_once( '/data/project/cyberbot/bots/enwiki-adminstats.php' );
+require_once( '/home/cyberpower678/bots/soxbot/enwiki-adminstats.php' );

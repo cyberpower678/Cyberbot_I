@@ -150,12 +150,36 @@ function process ($rawuser) {
     
     $out .= "|modify=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'renameuser' AND `log_action` = 'renameuser';" ) ) {
+     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'abusefilter';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
     } else return;
     
+    $out .= "|filter=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'merge';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|merge=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'massmessage';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|massmessage=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'renameuser' AND `log_action` = 'renameuser';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+
     $out .= "|rename=$res\n";
     
     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'import';" ) ) {

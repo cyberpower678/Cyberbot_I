@@ -206,7 +206,7 @@ function process ($rawuser) {
     
     $out .= "|import=$res\n";
   
-    if( defined( 'USECOMMONS' ) {
+    if( defined( 'USECOMMONS' ) ) {
      if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'pagetranslation';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];

@@ -86,6 +86,22 @@ function process ($rawuser) {
     
     $out .= "|deleted=$res\n";
     
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'revision';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|revdel=$res\n";
+    
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'event';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|eventdel=$res\n";
+    
     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'restore';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
@@ -189,7 +205,17 @@ function process ($rawuser) {
     } else return;
     
     $out .= "|import=$res\n";
-			
+  
+    if( defined( 'USECOMMONS' ) ) {
+     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'pagetranslation';" ) ) {
+        $res = mysqli_fetch_assoc( $result );
+        $res = $res['count'];
+        mysqli_free_result( $result );
+    } else return;
+    
+    $out .= "|ta=$res\n";
+    }
+    
 	$out .= '|style={{{style|}}}}}';
     unset( $res );
 	echo $out;

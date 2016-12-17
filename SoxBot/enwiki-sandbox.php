@@ -14,12 +14,7 @@ echo "----------RUN TIMESTAMP: ".date('r')."----------\n\n";
 date_default_timezone_set('UTC');//Use UTC time.
 
 //Define the text
-$sandboxtext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
-$sandboxtalktext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
-$xXtext = "<noinclude>\nThis sandbox is itself a template. This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----</noinclude>\n";
-$tstext = "<noinclude>\nThis sandbox is itself a template. This sandbox is for experimenting with templates.\n{{Please leave this line alone (template sandbox heading)}}\n\n\nIf you defined parameters such as <tt><nowiki>{{Template sandbox|First|Second|name=\"Named\"}}</nowiki></tt>:\n;First:{{{1}}}\n;Second:{{{2}}}\n;Name:{{{name}}}\n\n----</noinclude>\n";
-$tutorialtext = "{{Please leave this line alone (sandbox heading)}}<!--\n*               Welcome to the sandbox!              *\n*            Please leave this part alone            *\n*           The page is cleared regularly            *\n*     Feel free to try your editing skills below     *\n■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■-->";
-$tutorialtalktext = "{{Please leave this line alone (sandbox talk heading)}}\n<!-- Hello!  Feel free to try your formatting and editing skills below this line.  As this page is for editing experiments, this page will automatically be cleaned every 12 hours. -->";
+$sandboxtext = "{{subst:Template sandbox reset}}";
 
 $hour = date("H"); 
 $minute = date("i");
@@ -30,44 +25,60 @@ $pagetext = array (
 );
 if( ($hour == 00 || $hour == 12 || $hour  == 24) ) {
     $pagetext = array_merge( $pagetext, array (
-        "Wikipedia talk:Sandbox"=>$sandboxtalktext,
-        "User talk:Sandbox"=>$sandboxtalktext,
-        "Template:X1"=>$xXtext,
-        "Template:X2"=>$xXtext,
-        "Template:X3"=>$xXtext,
-        "Template:X4"=>$xXtext,
-        "Template:X5"=>$xXtext,
-        "Template:X6"=>$xXtext,
-        "Template:X7"=>$xXtext,
-        "Template:X8"=>$xXtext,
-        "Template:X9"=>$xXtext,
-        "Template:X10"=>$xXtext,
-        "Template:X11"=>$xXtext,
-        "Template:X12"=>$xXtext,
-        "Template:Template sandbox"=>$tstext,
-        "Template talk:X1"=>$tutorialtalktext,
-        "Template talk:X2"=>$tutorialtalktext,
-        "Template talk:X3"=>$tutorialtalktext,
-        "Template talk:X4"=>$tutorialtalktext,
-        "Template talk:X5"=>$tutorialtalktext,
-        "Template talk:X6"=>$tutorialtalktext,
-        "Template talk:X7"=>$tutorialtalktext,
-        "Template talk:X8"=>$tutorialtalktext,
-        "Template talk:X9"=>$tutorialtalktext,
-        "Template talk:X10"=>$tutorialtalktext,
-        "Template talk:X11"=>$tutorialtalktext,
-        "Template talk:X12"=>$tutorialtalktext,
-        "Template talk:Template sandbox"=>$tutorialtalktext,
-        "Wikipedia:Tutorial (Editing)/sandbox"=>$tutorialtext,
-        "Wikipedia:Tutorial (Formatting)/sandbox"=>$tutorialtext,
-        "Wikipedia:Tutorial (Wikipedia links)/sandbox"=>$tutorialtext,
-        "Wikipedia:Tutorial (External links)/sandbox"=>$tutorialtext,
-        "Wikipedia:Tutorial (Keep in mind)/sandbox"=>$tutorialtext,
-        "Wikipedia talk:Tutorial (Editing)/sandbox"=>$tutorialtalktext,
-        "Wikipedia talk:Tutorial (Formatting)/sandbox"=>$tutorialtalktext,
-        "Wikipedia talk:Tutorial (Wikipedia links)/sandbox"=>$tutorialtalktext,
-        "Wikipedia talk:Tutorial (External links)/sandbox"=>$tutorialtalktext,
-        "Wikipedia talk:Tutorial (Keep in mind)/sandbox"=>$tutorialtalktext
+        "Wikipedia talk:Sandbox"=>$sandboxtext,
+        "User talk:Sandbox"=>$sandboxtext,
+        "Template:X1"=>$sandboxtext,
+        "Template:X2"=>$sandboxtext,
+        "Template:X3"=>$sandboxtext,
+        "Template:X4"=>$sandboxtext,
+        "Template:X5"=>$sandboxtext,
+        "Template:X6"=>$sandboxtext,
+        "Template:X7"=>$sandboxtext,
+        "Template:X8"=>$sandboxtext,
+        "Template:X9"=>$sandboxtext,
+        "Template:X10"=>$sandboxtext,
+        "Template:X11"=>$sandboxtext,
+        "Template:X12"=>$sandboxtext,
+        "Template:X13"=>$sandboxtext,
+        "Template:X14"=>$sandboxtext,
+        "Template:X15"=>$sandboxtext,
+        "Template:X16"=>$sandboxtext,
+        "Template:X17"=>$sandboxtext,
+        "Template:X18"=>$sandboxtext,
+        "Template:X19"=>$sandboxtext,
+        "Template:X20"=>$sandboxtext,
+        "Template:Template sandbox"=>$sandboxtext,
+        "Template talk:X1"=>$sandboxtext,
+        "Template talk:X2"=>$sandboxtext,
+        "Template talk:X3"=>$sandboxtext,
+        "Template talk:X4"=>$sandboxtext,
+        "Template talk:X5"=>$sandboxtext,
+        "Template talk:X6"=>$sandboxtext,
+        "Template talk:X7"=>$sandboxtext,
+        "Template talk:X8"=>$sandboxtext,
+        "Template talk:X9"=>$sandboxtext,
+        "Template talk:X10"=>$sandboxtext,
+        "Template talk:X11"=>$sandboxtext,
+        "Template talk:X12"=>$sandboxtext,
+        "Template talk:X13"=>$sandboxtext,
+        "Template talk:X14"=>$sandboxtext,
+        "Template talk:X15"=>$sandboxtext,
+        "Template talk:X16"=>$sandboxtext,
+        "Template talk:X17"=>$sandboxtext,
+        "Template talk:X18"=>$sandboxtext,
+        "Template talk:X19"=>$sandboxtext,
+        "Template talk:X20"=>$sandboxtext,
+        "Template talk:Template sandbox"=>$sandboxtext,
+        "Wikipedia:Tutorial (Editing)/sandbox"=>$sandboxtext,
+        "Wikipedia:Tutorial (Formatting)/sandbox"=>$sandboxtext,
+        "Wikipedia:Tutorial (Wikipedia links)/sandbox"=>$sandboxtext,
+        "Wikipedia:Tutorial (External links)/sandbox"=>$sandboxtext,
+        "Wikipedia:Tutorial (Keep in mind)/sandbox"=>$sandboxtext,
+        "Wikipedia talk:Tutorial (Editing)/sandbox"=>$sandboxtext,
+        "Wikipedia talk:Tutorial (Formatting)/sandbox"=>$sandboxtext,
+        "Wikipedia talk:Tutorial (Wikipedia links)/sandbox"=>$sandboxtext,
+        "Wikipedia talk:Tutorial (External links)/sandbox"=>$sandboxtext,
+        "Wikipedia talk:Tutorial (Keep in mind)/sandbox"=>$sandboxtext
     ));    
 }
 foreach( $pagetext as $pagetitle=>$text) {

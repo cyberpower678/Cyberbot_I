@@ -45,13 +45,6 @@ foreach ($u as $name) {
 	if( $issysop ) {
 		process($m[2]);	
 	}
-	else {
-		$out = "'''$m[2] is not an administrator or an account creator.<br>Therefore they have been disallowed the use of adminstats.'''";
-		echo $out;
-		echo "\n";
-		$toedit = "Template:Adminstats/$m[2]";
-		initPage( $toedit )->edit($out,"Adminstats are not allowed for this user.",true);
-	}
 }
 
 mysqli_close( $db );

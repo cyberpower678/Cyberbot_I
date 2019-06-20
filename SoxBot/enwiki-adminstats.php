@@ -70,7 +70,7 @@ function process ($rawuser) {
         mysqli_free_result( $result );
     } else return;
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'newusers';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'newusers';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -78,7 +78,7 @@ function process ($rawuser) {
         
     $out .= "|created=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'delete';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'delete';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -86,7 +86,7 @@ function process ($rawuser) {
     
     $out .= "|deleted=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'revision';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'revision';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -94,7 +94,7 @@ function process ($rawuser) {
     
     $out .= "|revdel=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'event';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'event';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -102,7 +102,7 @@ function process ($rawuser) {
     
     $out .= "|eventdel=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'restore';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'delete' AND `log_action` = 'restore';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -110,7 +110,7 @@ function process ($rawuser) {
     
     $out .= "|restored=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'block';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'block';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -118,7 +118,7 @@ function process ($rawuser) {
     
     $out .= "|blocked=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'protect';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'protect';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -126,7 +126,7 @@ function process ($rawuser) {
     
     $out .= "|protected=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'unprotect';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'unprotect';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -134,7 +134,7 @@ function process ($rawuser) {
     
     $out .= "|unprotected=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'rights' AND `log_action` = 'rights';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'rights' AND `log_action` = 'rights';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -142,7 +142,7 @@ function process ($rawuser) {
     
     $out .= "|rights=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'reblock';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'reblock';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -150,7 +150,7 @@ function process ($rawuser) {
     
     $out .= "|reblock=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'unblock';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'block' AND `log_action` = 'unblock';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -158,7 +158,7 @@ function process ($rawuser) {
     
     $out .= "|unblock=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'modify';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'protect' AND `log_action` = 'modify';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -166,7 +166,7 @@ function process ($rawuser) {
     
     $out .= "|modify=$res\n";
     
-     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'abusefilter';" ) ) {
+     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'abusefilter';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -174,7 +174,7 @@ function process ($rawuser) {
     
     $out .= "|filter=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'merge';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'merge';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -182,7 +182,7 @@ function process ($rawuser) {
     
     $out .= "|merge=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'massmessage';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'massmessage';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -190,7 +190,7 @@ function process ($rawuser) {
     
     $out .= "|massmessage=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'renameuser' AND `log_action` = 'renameuser';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'renameuser' AND `log_action` = 'renameuser';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -198,7 +198,7 @@ function process ($rawuser) {
 
     $out .= "|rename=$res\n";
     
-    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'import';" ) ) {
+    if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'import';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );
@@ -207,7 +207,7 @@ function process ($rawuser) {
     $out .= "|import=$res\n";
   
     if( defined( 'USECOMMONS' ) ) {
-     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex WHERE `log_user` = '{$uid}' AND `log_type` = 'pagetranslation';" ) ) {
+     if( $result = mysqli_query( $db, "SELECT count(log_action) AS count FROM logging_userindex INNER JOIN actor_logging ON log_actor = actor_id  WHERE `actor_user` = '{$uid}' AND `log_type` = 'pagetranslation';" ) ) {
         $res = mysqli_fetch_assoc( $result );
         $res = $res['count'];
         mysqli_free_result( $result );

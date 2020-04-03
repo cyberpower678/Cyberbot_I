@@ -367,7 +367,11 @@ loginerror: if( !empty( $error ) ) $this->setLastError(array('component' => 'oau
 	}
 
 	function getToken($page = null, $type = 'edit') {
-		$actions = array('action' => 'tokens', 'type' => $type);
+		if ($type == 'edit') {
+			$type = 'csrf';
+		}
+
+		$actions = array('action' => 'query', 'meta' => 'tokens', 'type' => $type);
 		$x = $this->query($actions, true);
 		$t = $x['tokens'][$type.'token'];
 		if (!$t) return false;

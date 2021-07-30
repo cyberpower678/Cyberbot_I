@@ -366,10 +366,14 @@ loginerror: if( !empty( $error ) ) $this->setLastError(array('component' => 'oau
 		return $ret;
 	}
 
-	function getToken($page = null, $type = 'edit') {
-		$actions = array('action' => 'tokens', 'type' => $type);
+	function getToken($page = null, $type = 'csrf') {
+		if ($type === 'edit') {
+			$type = 'csrf';
+		}
+
+		$actions = array('action' => 'query', 'meta' => 'tokens', 'type' => $type);
 		$x = $this->query($actions, true);
-		$t = $x['tokens'][$type.'token'];
+		$t = $x['query']['tokens'][$type.'token'];
 		if (!$t) return false;
 		else return $t;
 	}

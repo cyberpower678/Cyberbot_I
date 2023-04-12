@@ -15,7 +15,7 @@ while(true) {
 	date_default_timezone_set('UTC');//Use UTC time.
 
 	//Define the text
-	$sandboxtext = "{{Meta:Sandbox/Please do not edit this line}}<!-- <translate><!--T:3-->\nPlease edit below this line.</translate> -->";
+	$sandboxtext = "{{Meta:Sandbox/Please do not edit this line}}<!-- Please edit below this line -->";
 	$hour = date("%H"); 
 	$minute = date("%i");
 
